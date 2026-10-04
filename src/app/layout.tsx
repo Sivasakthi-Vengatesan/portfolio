@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
-import { Archivo_Black, Space_Grotesk, VT323, Pacifico } from "next/font/google"; // Import fonts
+import { Archivo_Black, Space_Grotesk, VT323, Pacifico } from "next/font/google";
 import "./globals.css";
 import RetroCursor from "@/components/RetroCursor";
 import { Analytics } from "@vercel/analytics/next";
-
 
 const archivoBlack = Archivo_Black({
   weight: "400",
@@ -29,89 +28,90 @@ const pacifico = Pacifico({
 });
 
 export const metadata: Metadata = {
-  title: "Anirudh S | AI/ML & Agentic Systems Engineer",
-  description: "Building Autonomous Agentic Workflows, Production GenAI Backends (FastAPI & pgvector), and Edge Machine Learning Systems.",
+  metadataBase: new URL('https://sivasakthi.dev'),
+  title: "SIVASAKTHI VENGATESAN | BACKEND / BIG DATA ENGINEER",
+  description: "I build backend systems and data infrastructure around distributed processing, streaming data, and reliable software systems.",
   keywords: [
-    "Anirudh S",
-    "AI/ML Engineer",
-    "Generative AI Engineer",
-    "Agentic Workflows",
-    "Autonomous Agents",
-    "ReAct Architecture",
+    "Sivasakthi Vengatesan",
+    "Sivasakthi V",
+    "Backend Engineer",
+    "Big Data Engineer",
+    "Distributed Systems",
+    "Data Infrastructure",
+    "Apache Spark",
+    "Apache Kafka",
     "FastAPI",
+    "Spring Boot",
+    "Z3 SMT",
     "pgvector",
-    "Supabase",
-    "Groq API",
-    "NVIDIA NIM",
-    "TensorFlow Lite",
-    "PyTorch",
-    "SudoAnirudh"
+    "PostgreSQL",
+    "Hadoop",
+    "LangChain4j",
+    "Chennai Institute of Technology"
   ],
-  authors: [{ name: "Anirudh S" }],
-  creator: "Anirudh S",
-  publisher: "Anirudh S",
+  authors: [{ name: "Sivasakthi Vengatesan" }],
+  creator: "Sivasakthi Vengatesan",
+  publisher: "Sivasakthi Vengatesan",
   robots: "index, follow",
   alternates: {
-    canonical: "https://sudoanirudh.vercel.app/",
+    canonical: "https://sivasakthi-vengatesan.vercel.app/",
   },
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://sudoanirudh.vercel.app/",
-    siteName: "Anirudh S | AI/ML & Agentic Systems Engineer",
-    title: "Anirudh S | AI/ML & Agentic Systems Engineer",
-    description: "Explore production-grade AI systems, multi-agent frameworks, FastAPI backends, and edge ML applications built by Anirudh S.",
+    url: "https://sivasakthi-vengatesan.vercel.app/",
+    siteName: "SIVASAKTHI VENGATESAN | BACKEND / BIG DATA ENGINEER",
+    title: "SIVASAKTHI VENGATESAN | BACKEND / BIG DATA ENGINEER",
+    description: "Explore distributed data pipelines, SMT-based AI formal verification engines, real-time streaming architectures, and performant backend systems built by Sivasakthi Vengatesan.",
     images: [
       {
         url: "/profile_pixel.png",
         width: 1200,
         height: 630,
-        alt: "Anirudh S | AI/ML & Agentic Systems Engineer Portfolio",
+        alt: "Sivasakthi Vengatesan Portfolio",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Anirudh S | AI/ML & Agentic Systems Engineer",
-    description: "Building Autonomous Agentic Workflows, Production GenAI Backends (FastAPI & pgvector), and Edge Machine Learning Systems.",
+    title: "SIVASAKTHI VENGATESAN | BACKEND / BIG DATA ENGINEER",
+    description: "I build backend systems and data infrastructure around distributed processing, streaming data, and reliable software systems.",
     images: ["/profile_pixel.png"],
-    creator: "@SudoAnirudh",
-  },
-  verification: {
-    google: "9247cc91dc1d8725",
+    creator: "@Sivasakthi_V",
   },
 };
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Person",
-  name: "Anirudh S",
-  url: "https://sudoanirudh.vercel.app/",
-  image: "https://sudoanirudh.vercel.app/profile_pixel.png",
-  jobTitle: "AI/ML Engineer | Generative AI & Agentic Systems",
+  name: "Sivasakthi Vengatesan",
+  url: "https://sivasakthi-vengatesan.vercel.app/",
+  image: "https://sivasakthi-vengatesan.vercel.app/profile_pixel.png",
+  jobTitle: "Backend / Big Data Engineer",
   alumniOf: {
     "@type": "EducationalOrganization",
-    name: "Srinivas Institute Of Technology"
+    name: "Chennai Institute of Technology"
   },
   knowsAbout: [
-    "Autonomous Agents",
-    "Agentic Workflows",
-    "ReAct Control Loops",
+    "Backend Systems",
+    "Big Data",
+    "Distributed Systems",
+    "Apache Spark",
+    "Apache Kafka",
+    "Apache Hadoop",
     "FastAPI",
+    "Spring Boot",
+    "PostgreSQL",
     "pgvector",
-    "Supabase",
-    "Multi-Agent Systems",
-    "Machine Learning",
-    "Deep Learning",
-    "TensorFlow Lite",
-    "PyTorch",
-    "Next.js"
+    "Z3 SMT Formal Verification",
+    "Data Infrastructure",
+    "Streaming Pipelines"
   ],
   sameAs: [
-    "https://github.com/SudoAnirudh",
-    "https://linkedin.com/in/sudoanirudh"
+    "https://github.com/Sivasakthi-Vengatesan",
+    "https://linkedin.com/in/sivasakthi-vengatesan-8a1209410"
   ],
-  description: "AI/ML Engineer specializing in Autonomous Agentic Workflows, Production GenAI Backends (FastAPI & pgvector), and Edge Machine Learning Systems."
+  description: "Backend / Big Data Engineer building backend systems and data infrastructure around distributed processing, streaming data, and reliable software systems."
 };
 
 export default function RootLayout({
@@ -135,7 +135,7 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
         />
-        {/* Helper for cursor hiding handled inside component, but adding it here to be safe */}
+        {/* Retro Custom Cursor */}
         <RetroCursor />
         <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
           {children}

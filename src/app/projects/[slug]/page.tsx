@@ -24,10 +24,10 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const project = PROJECTS[slug];
-  if (!project) return { title: 'Project Not Found | Anirudh S' };
+  if (!project) return { title: 'Project Not Found | Sivasakthi Vengatesan' };
 
   return {
-    title: `${project.title} — Technical Case Study | Anirudh S`,
+    title: `${project.title} — Technical Case Study | Sivasakthi Vengatesan`,
     description: project.tagline,
   };
 }
@@ -58,8 +58,8 @@ export default async function CaseStudyPage({ params }: PageProps) {
     operatingSystem: "Web",
     author: {
       "@type": "Person",
-      name: "Anirudh S",
-      url: "https://sudoanirudh.vercel.app/"
+      name: "Sivasakthi Vengatesan",
+      url: "https://sivasakthi-vengatesan.vercel.app/"
     },
     keywords: project.techStack.join(", ")
   };

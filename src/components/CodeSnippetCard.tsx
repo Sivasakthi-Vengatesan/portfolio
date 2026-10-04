@@ -5,7 +5,7 @@ export interface CodeSnippet {
     filename: string;
     language: string;
     code: string;
-    explanation: string;
+    explanation?: string;
 }
 
 interface CodeSnippetCardProps {
@@ -44,9 +44,11 @@ export const CodeSnippetCard: React.FC<CodeSnippetCardProps> = ({ snippet }) => 
                 </div>
             </div>
 
-            <p className="font-body text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
-                {snippet.explanation}
-            </p>
+            {snippet.explanation && (
+                <p className="font-body text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed font-medium">
+                    {snippet.explanation}
+                </p>
+            )}
 
             {/* Dark Code Container */}
             <div className="bg-zinc-950 rounded-2xl border-2 border-black overflow-hidden shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">

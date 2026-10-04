@@ -2,7 +2,7 @@ import { MetadataRoute } from 'next';
 import { PROJECTS } from '@/config/projects';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = 'https://sudoanirudh.vercel.app';
+  const baseUrl = 'https://sivasakthi.dev';
 
   const uniqueSlugs = Array.from(new Set(Object.values(PROJECTS).map((p) => p.slug)));
 

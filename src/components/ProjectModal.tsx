@@ -9,2453 +9,503 @@ import { motion } from 'framer-motion';
 
 // --- SUB-SIMULATORS FOR PORTFOLIO PROJECTS ---
 
-const CattleScannerSimulator: React.FC = () => {
-    const [selectedCow, setSelectedCow] = useState<'cow1' | 'cow2' | 'cow3'>('cow1');
-    const [scanState, setScanState] = useState<'idle' | 'scanning' | 'done'>('idle');
-    const [progress, setProgress] = useState(0);
+// 1. AVE (Asynchronous Verification Engine) Simulator
+const AveSimulator: React.FC = () => {
+    const [selectedAction, setSelectedAction] = useState<'fund_transfer' | 'drop_table' | 'read_audit'>('fund_transfer');
+    const [solveState, setSolveState] = useState<'idle' | 'evaluating' | 'resolved'>('idle');
+    const [auditLog, setAuditLog] = useState<string[]>([
+        "SYSTEM_BOOT: Z3 SMT Solver Core v4.12.2 Initialized.",
+        "GATEWAY: Interceptor listening on /v1/agent/tool_call.",
+        "POLICY_REGISTRY: Loaded 14 formal constraint rules."
+    ]);
 
-    const cows = {
-        cow1: { name: "Holstein Friesian #402", status: "Lumpy Skin Disease detected", confidence: "94.2%", breed: "Holstein Friesian", action: "Isolate herd and contact local vet immediately." },
-        cow2: { name: "Gir Cow #108", status: "Healthy cattle", confidence: "98.7%", breed: "Gir", action: "Routine feed and health checks." },
-        cow3: { name: "Jersey #099", status: "Foot and Mouth Disease suspected", confidence: "88.1%", breed: "Jersey", action: "Quarantine cattle. Apply foot bath antiseptics." },
+    const toolCalls = {
+        fund_transfer: {
+            title: "Agent Tool Call: TransferFunds",
+            tool: "wire_transfer_v2",
+            params: { amount: 45000, recipient: "0x89A...F01", currency: "USD", max_authorized: 10000 },
+            z3Formula: "And(amount <= max_authorized, recipient_verified == True, daily_total + amount <= 50000)",
+            verdict: "BLOCK",
+            reason: "VIOLATION: amount (45000) > max_authorized (10000). Constraint unsatisfiable (UNSAT)."
+        },
+        drop_table: {
+            title: "Agent Tool Call: DropTable",
+            tool: "db_admin_execute",
+            params: { action: "DROP", target: "public.users_audit_prod", role: "ai_agent_tier_1" },
+            z3Formula: "And(role == 'superadmin', environment != 'production', table_type != 'audit')",
+            verdict: "BLOCK",
+            reason: "CRITICAL VIOLATION: Agent role tier 1 denied DROP permission on production audit tables."
+        },
+        read_audit: {
+            title: "Agent Tool Call: SafeAuditRead",
+            tool: "query_telemetry",
+            params: { filter: "timestamp >= now() - 1h", limit: 100, tenant_id: "cit_internal" },
+            z3Formula: "And(limit <= 1000, tenant_id == session_tenant, read_only == True)",
+            verdict: "ALLOW",
+            reason: "SATISFIABLE (SAT): All formal safety constraints verified across parameters."
+        }
     };
 
-    const runInference = () => {
-        setScanState('scanning');
-        setProgress(0);
+    const handleRunVerification = () => {
+        setSolveState('evaluating');
+        setTimeout(() => {
+            const current = toolCalls[selectedAction];
+            setSolveState('resolved');
+            setAuditLog(prev => [
+                `[${new Date().toLocaleTimeString()}] INGESTION: Tool '${current.tool}' intercepted.`,
+                `[${new Date().toLocaleTimeString()}] Z3 SOLVER: Checking satisfiability against formal AST rules...`,
+                `[${new Date().toLocaleTimeString()}] RESULT: ${current.verdict} - ${current.reason}`,
+                ...prev.slice(0, 5)
+            ]);
+        }, 600);
     };
 
-    useEffect(() => {
-        if (scanState !== 'scanning') return;
-        const interval = setInterval(() => {
-            setProgress(p => {
-                if (p >= 100) {
-                    clearInterval(interval);
-                    setScanState('done');
-                    return 100;
-                }
-                return p + 20;
-            });
-        }, 150);
-        return () => clearInterval(interval);
-    }, [scanState]);
+    const current = toolCalls[selectedAction];
 
     return (
         <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider">
-                System: PashuSwasthya TFLite Client v1.0.4
+            <div className="bg-black text-green-400 p-2 text-[10px] uppercase tracking-wider flex justify-between items-center">
+                <span>AVE_CORE://Z3_SMT_GUARD_v2.4</span>
+                <span className="animate-pulse">● INTERCEPTOR ACTIVE</span>
             </div>
+
+            {/* Selector */}
             <div className="grid grid-cols-3 gap-2">
-                {(['cow1', 'cow2', 'cow3'] as const).map(c => (
-                    <button 
-                        key={c}
-                        onClick={() => { setSelectedCow(c); setScanState('idle'); }}
-                        className={`p-2 border-2 text-[10px] uppercase transition-all ${selectedCow === c ? 'bg-retro-yellow border-black text-black' : 'bg-white border-zinc-300 text-zinc-600'}`}
+                {(['fund_transfer', 'drop_table', 'read_audit'] as const).map(action => (
+                    <button
+                        key={action}
+                        onClick={() => { setSelectedAction(action); setSolveState('idle'); }}
+                        className={`p-2 border-2 text-[10px] uppercase transition-all ${
+                            selectedAction === action ? 'bg-retro-yellow border-black text-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white border-zinc-300 text-zinc-600'
+                        }`}
                     >
-                        {c === 'cow1' ? 'Subject A' : c === 'cow2' ? 'Subject B' : 'Subject C'}
+                        {action === 'fund_transfer' ? 'Wire $45k' : action === 'drop_table' ? 'Drop Table' : 'Safe Read'}
                     </button>
                 ))}
             </div>
-            <div className="border-4 border-black bg-white aspect-video relative flex flex-col items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 bg-zinc-800 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-white/20 text-8xl">agriculture</span>
-                    <div className="absolute bottom-2 left-2 bg-black/60 text-white px-2 py-0.5 text-[9px] tracking-widest">
-                        CAM_FEED_01 // CONFIDENCE: HIGH
-                    </div>
-                    {scanState === 'scanning' && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/70 text-retro-yellow text-xs p-4 space-y-2">
-                            <div>SCANNING EPIDERMAL LAYER...</div>
-                            <div className="w-full max-w-xs bg-zinc-700 h-4 border-2 border-retro-yellow overflow-hidden">
-                                <div className="bg-retro-yellow h-full transition-all duration-150" style={{ width: `${progress}%` }} />
-                            </div>
-                            <div className="text-[10px] text-white">{progress}% Complete</div>
-                        </div>
-                    )}
-                    {scanState === 'done' && (
-                        <div className="absolute inset-0 bg-black/85 text-white p-3 flex flex-col justify-between overflow-y-auto font-body">
-                            <div>
-                                <div className="font-pixel text-[10px] text-retro-yellow uppercase tracking-widest mb-1 border-b border-white/20 pb-1">Inference Complete</div>
-                                <div className="text-xs font-bold uppercase">{cows[selectedCow].name}</div>
-                                <div className="text-[11px] text-zinc-300">Breed: {cows[selectedCow].breed}</div>
-                                <div className="text-[11px] text-zinc-300">Confidence: {cows[selectedCow].confidence}</div>
-                                <div className="mt-2 text-xs bg-red-950/40 border border-red-500/50 p-2 rounded text-retro-orange font-bold">
-                                    Status: {cows[selectedCow].status}
-                                </div>
-                            </div>
-                            <div className="text-[10px] text-zinc-400 bg-black p-1.5 border border-zinc-700 font-pixel mt-2 leading-tight">
-                                Action Plan: {cows[selectedCow].action}
-                            </div>
-                        </div>
-                    )}
+
+            {/* Main Terminal View */}
+            <div className="border-4 border-black bg-zinc-950 p-3 text-white font-mono text-[11px] space-y-3">
+                <div className="text-zinc-400 border-b border-zinc-800 pb-1 flex justify-between">
+                    <span>{current.title}</span>
+                    <span className="text-retro-yellow">TOOL: {current.tool}</span>
                 </div>
+
+                <div>
+                    <div className="text-[10px] text-zinc-400 uppercase font-pixel mb-1">Incoming Arguments (Extracted via Pydantic):</div>
+                    <pre className="bg-zinc-900 p-2 rounded border border-zinc-800 text-green-300 text-[10px] overflow-x-auto">
+                        {JSON.stringify(current.params, null, 2)}
+                    </pre>
+                </div>
+
+                <div>
+                    <div className="text-[10px] text-zinc-400 uppercase font-pixel mb-1">Z3 SMT Verification Formula:</div>
+                    <div className="bg-zinc-900 p-2 rounded border border-zinc-800 text-yellow-300 text-[10px] font-mono break-all">
+                        {current.z3Formula}
+                    </div>
+                </div>
+
+                {solveState === 'evaluating' && (
+                    <div className="bg-zinc-900 p-3 border-2 border-retro-yellow text-center space-y-1">
+                        <div className="text-retro-yellow text-xs animate-pulse font-pixel">EVALUATING SMT FIRST-ORDER LOGIC CONSTRAINTS...</div>
+                        <div className="text-[10px] text-zinc-400">Solving AST satisfiability on Z3Py engine</div>
+                    </div>
+                )}
+
+                {solveState === 'resolved' && (
+                    <div className={`p-3 border-2 font-pixel text-xs ${
+                        current.verdict === 'ALLOW' 
+                            ? 'bg-emerald-950/80 border-emerald-400 text-emerald-300' 
+                            : 'bg-red-950/80 border-red-500 text-red-300'
+                    }`}>
+                        <div className="flex items-center gap-2 text-sm font-bold tracking-wider mb-1">
+                            <span>VERDICT: {current.verdict}</span>
+                            <span>{current.verdict === 'ALLOW' ? '✔' : '✖'}</span>
+                        </div>
+                        <div className="font-mono text-[10px] leading-relaxed text-zinc-200">
+                            {current.reason}
+                        </div>
+                    </div>
+                )}
             </div>
-            {scanState === 'idle' && (
-                <button 
-                    onClick={runInference}
-                    className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+
+            {/* Action Buttons */}
+            {solveState !== 'evaluating' && (
+                <button
+                    onClick={handleRunVerification}
+                    className="w-full py-2.5 bg-retro-orange border-2 border-black text-xs uppercase font-pixel font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
                 >
-                    Diagnose Cattle
+                    Run Z3 Formal Verification
                 </button>
             )}
-            {scanState === 'done' && (
-                <button 
-                    onClick={() => setScanState('idle')}
-                    className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                    Reset Scanner
-                </button>
-            )}
+
+            {/* Live Audit Trail */}
+            <div className="bg-zinc-900 p-2 border-2 border-black font-mono text-[9px] text-zinc-400 space-y-1">
+                <div className="font-pixel text-[10px] text-zinc-300 uppercase border-b border-zinc-800 pb-0.5 mb-1">Immutable Security Audit Trail</div>
+                {auditLog.map((log, idx) => (
+                    <div key={idx} className="truncate">{log}</div>
+                ))}
+            </div>
         </div>
     );
 };
 
-const CnnVisualizerSimulator: React.FC = () => {
-    const [selectedPattern, setSelectedPattern] = useState<'noise' | 'vertical' | 'horizontal'>('vertical');
-    const [selectedFilter, setSelectedFilter] = useState<'edge' | 'sharpen' | 'blur'>('edge');
+// 2. OXYS Simulator
+const OxysSimulator: React.FC = () => {
+    const [streamStatus, setStreamStatus] = useState<'normal' | 'schema_drift' | 'null_storm' | 'duplicate_replay'>('normal');
+    const [eventsProcessed, setEventsProcessed] = useState(14820);
+    const [quarantineCount, setQuarantineCount] = useState(0);
 
-    const patterns = {
-        noise: [
-            [1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0],
-            [1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0],
-            [1, 0, 1, 0, 1],
-        ],
-        vertical: [
-            [1, 1, 0, 0, 0],
-            [1, 1, 0, 0, 0],
-            [1, 1, 0, 0, 0],
-            [1, 1, 0, 0, 0],
-            [1, 1, 0, 0, 0],
-        ],
-        horizontal: [
-            [1, 1, 1, 1, 1],
-            [1, 1, 1, 1, 1],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0],
-        ],
-    };
-
-    const kernels = {
-        edge: [
-            [-1, -1, -1],
-            [-1,  8, -1],
-            [-1, -1, -1],
-        ],
-        sharpen: [
-            [ 0, -1,  0],
-            [-1,  5, -1],
-            [ 0, -1,  0],
-        ],
-        blur: [
-            [0.1, 0.1, 0.1],
-            [0.1, 0.2, 0.1],
-            [0.1, 0.1, 0.1],
-        ],
-    };
-
-    const computeConvolutions = (pat: number[][], ker: number[][]) => {
-        const result: number[][] = [];
-        for (let r = 0; r < 3; r++) {
-            const row: number[] = [];
-            for (let c = 0; c < 3; c++) {
-                let sum = 0;
-                for (let kr = 0; kr < 3; kr++) {
-                    for (let kc = 0; kc < 3; kc++) {
-                        sum += pat[r + kr][c + kc] * ker[kr][kc];
-                    }
-                }
-                row.push(Number(sum.toFixed(1)));
-            }
-            result.push(row);
+    const handleInjectAnomaly = (type: 'normal' | 'schema_drift' | 'null_storm' | 'duplicate_replay') => {
+        setStreamStatus(type);
+        if (type !== 'normal') {
+            setQuarantineCount(prev => prev + 1);
         }
-        return result;
     };
-
-    const output = computeConvolutions(patterns[selectedPattern], kernels[selectedFilter]);
 
     return (
         <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel">
-                CNN Visualizer Engine // Layer: CONV_2D
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-[10px] uppercase text-zinc-500 mb-1">Select Input Matrix</label>
-                    <div className="grid grid-cols-3 gap-1">
-                        {(['vertical', 'horizontal', 'noise'] as const).map(p => (
-                            <button
-                                key={p}
-                                onClick={() => setSelectedPattern(p)}
-                                className={`px-1 py-1 border-2 text-[9px] uppercase truncate ${selectedPattern === p ? 'bg-retro-yellow border-black font-bold' : 'bg-white'}`}
-                            >
-                                {p}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div>
-                    <label className="block text-[10px] uppercase text-zinc-500 mb-1">Select Filter Kernel</label>
-                    <div className="grid grid-cols-3 gap-1">
-                        {(['edge', 'sharpen', 'blur'] as const).map(f => (
-                            <button
-                                key={f}
-                                onClick={() => setSelectedFilter(f)}
-                                className={`px-1 py-1 border-2 text-[9px] uppercase truncate ${selectedFilter === f ? 'bg-retro-yellow border-black font-bold' : 'bg-white'}`}
-                            >
-                                {f}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="bg-black text-amber-400 p-2 text-[10px] uppercase tracking-wider flex justify-between items-center">
+                <span>OXYS_STREAM://USGS_EARTHQUAKE_PIPELINE</span>
+                <span className="animate-pulse">● SPARK STREAMING ENGINE</span>
             </div>
 
-            <div className="grid grid-cols-3 gap-2 items-center text-center pt-2">
-                <div className="space-y-1">
-                    <div className="text-[9px] text-zinc-500 uppercase">Input (5x5)</div>
-                    <div className="grid grid-cols-5 gap-0.5 border-2 border-black p-1 bg-white">
-                        {patterns[selectedPattern].map((row, r) => 
-                            row.map((val, c) => (
-                                <div 
-                                    key={`in-${r}-${c}`}
-                                    className={`aspect-square text-[9px] flex items-center justify-center border border-zinc-100 ${val === 1 ? 'bg-retro-charcoal text-white font-bold' : 'bg-zinc-100 text-zinc-400'}`}
-                                >
-                                    {val}
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                <div className="space-y-1">
-                    <div className="text-[9px] text-zinc-500 uppercase">Kernel (3x3)</div>
-                    <div className="grid grid-cols-3 gap-0.5 border-2 border-black p-1 bg-retro-cream">
-                        {kernels[selectedFilter].map((row, r) => 
-                            row.map((val, c) => (
-                                <div 
-                                    key={`ker-${r}-${c}`}
-                                    className="aspect-square text-[9px] flex items-center justify-center border border-zinc-300 bg-white font-bold"
-                                >
-                                    {val}
-                                </div>
-                            ))
-                        )}
-                    </div>
-                </div>
-
-                <div className="space-y-1">
-                    <div className="text-[9px] text-zinc-500 uppercase">Feature Map</div>
-                    <div className="grid grid-cols-3 gap-0.5 border-2 border-black p-1 bg-white">
-                        {output.map((row, r) => 
-                            row.map((val, c) => {
-                                const isPositive = val > 0;
-                                return (
-                                    <div 
-                                        key={`out-${r}-${c}`}
-                                        className={`aspect-square text-[10px] flex items-center justify-center font-bold border border-zinc-200 ${isPositive ? 'bg-retro-green text-retro-charcoal' : 'bg-red-50 text-red-500'}`}
-                                    >
-                                        {val}
-                                    </div>
-                                );
-                            })
-                        )}
-                    </div>
-                </div>
+            {/* Anomaly Trigger Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {[
+                    { id: 'normal', label: 'Healthy Stream' },
+                    { id: 'schema_drift', label: 'Schema Drift' },
+                    { id: 'null_storm', label: 'Null Storm' },
+                    { id: 'duplicate_replay', label: 'Replay Storm' }
+                ].map(item => (
+                    <button
+                        key={item.id}
+                        onClick={() => handleInjectAnomaly(item.id as any)}
+                        className={`p-2 border-2 text-[10px] uppercase transition-all ${
+                            streamStatus === item.id 
+                                ? 'bg-retro-yellow border-black text-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' 
+                                : 'bg-white border-zinc-300 text-zinc-600'
+                        }`}
+                    >
+                        {item.label}
+                    </button>
+                ))}
             </div>
 
-            <div className="text-[9px] text-zinc-500 bg-zinc-50 border border-zinc-300 p-2 leading-tight uppercase font-pixel">
-                Formula: Output[x,y] = Sum_i,j (Input[x+i, y+j] * Kernel[i,j])
-                <br/>
-                Notice how the Kernel detects directional features (like edges)!
+            {/* Pipeline Visualizer */}
+            <div className="border-4 border-black bg-zinc-950 p-3 text-white font-mono text-[11px] space-y-3">
+                <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-pixel">
+                    <div className="bg-zinc-900 p-2 border border-zinc-800">
+                        <div className="text-zinc-400">INGESTION</div>
+                        <div className="text-retro-green font-bold">1,240 msg/s</div>
+                    </div>
+                    <div className="bg-zinc-900 p-2 border border-zinc-800">
+                        <div className="text-zinc-400">P99 LATENCY</div>
+                        <div className="text-retro-yellow font-bold">18.4 ms</div>
+                    </div>
+                    <div className="bg-zinc-900 p-2 border border-zinc-800">
+                        <div className="text-zinc-400">QUARANTINED</div>
+                        <div className="text-retro-orange font-bold">{quarantineCount} EVENTS</div>
+                    </div>
+                </div>
+
+                <div className="bg-zinc-900 p-2.5 rounded border border-zinc-800">
+                    <div className="text-[10px] text-zinc-400 uppercase font-pixel mb-1.5 flex justify-between">
+                        <span>Live Spark Micro-Batch Inspection</span>
+                        <span className="text-retro-yellow">SOURCE: USGS GeoJSON Feed</span>
+                    </div>
+
+                    {streamStatus === 'normal' && (
+                        <div className="text-emerald-400 text-[10px] space-y-1">
+                            <div>✔ Schema Match: [id: string, mag: float, place: string, time: timestamp, coordinates: array[float]]</div>
+                            <div>✔ Null Rate: 0.002% (Below 0.05% threshold)</div>
+                            <div>✔ Deduplication Bloom Filter: 0 duplicate hashes detected</div>
+                            <div className="text-zinc-400 text-[9px] mt-1">STATUS: Batch passed to Postgres warehouse + MinIO cold lake.</div>
+                        </div>
+                    )}
+
+                    {streamStatus === 'schema_drift' && (
+                        <div className="text-retro-orange text-[10px] space-y-1">
+                            <div className="font-bold">⚠ CRITICAL SCHEMA DRIFT DETECTED IN INGESTION BATCH #9412</div>
+                            <div>Anomaly: Field `magnitude_type` altered from `VARCHAR(8)` to `INTEGER` by upstream API.</div>
+                            <div className="bg-red-950/60 p-1.5 border border-red-500/50 text-red-200 mt-1 font-pixel">
+                                ACTION: Schema enforcement triggered → Record redirected to Quarantine DLQ.
+                            </div>
+                        </div>
+                    )}
+
+                    {streamStatus === 'null_storm' && (
+                        <div className="text-red-400 text-[10px] space-y-1">
+                            <div className="font-bold">⚠ NULL-RATE ANOMALY SPIKE: 68.4% of coordinates missing</div>
+                            <div>Threshold Exceeded: Max allowed null threshold (5%) violated in USGS region feed.</div>
+                            <div className="bg-red-950/60 p-1.5 border border-red-500/50 text-red-200 mt-1 font-pixel">
+                                ACTION: Circuit breaker opened. Alerts emitted via FastAPI telemetry webhook.
+                            </div>
+                        </div>
+                    )}
+
+                    {streamStatus === 'duplicate_replay' && (
+                        <div className="text-yellow-400 text-[10px] space-y-1">
+                            <div className="font-bold">⚠ REPLAY STORM IDENTIFIED: 4,200 repeated event hashes</div>
+                            <div>Fingerprint Match: Exact duplicate window detected on event IDs [ci4098234..ci4098310].</div>
+                            <div className="bg-yellow-950/60 p-1.5 border border-yellow-500/50 text-yellow-200 mt-1 font-pixel">
+                                ACTION: Sliding window deduplicator dropped duplicate payloads prior to database commit.
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 };
 
-const StockPredictorSimulator: React.FC = () => {
-    const [selectedStock, setSelectedStock] = useState<'AAPL' | 'NVDA' | 'BTC'>('NVDA');
-    const [model, setModel] = useState<'lstm' | 'gru'>('lstm');
-    const [simState, setSimState] = useState<'idle' | 'running' | 'done'>('idle');
+// 3. Crime Record Intelligence Platform Simulator
+const CrimeRecordSimulator: React.FC = () => {
+    const [selectedQuery, setSelectedQuery] = useState<number>(0);
+    const [searchState, setSearchState] = useState<'idle' | 'searching' | 'done'>('idle');
 
-    const runSimulation = () => {
-        setSimState('running');
+    const sampleQueries = [
+        {
+            query: "Retrieve financial fraud FIR records involving shell company wire transfers in Sector 4",
+            matches: [
+                { id: "FIR-2025-9041", score: "0.082 (Cosine Sim: 91.8%)", crime: "Wire Fraud / Section 420", location: "Sector 4 Financial District", status: "Charge Sheet Filed" },
+                { id: "FIR-2024-8120", score: "0.141 (Cosine Sim: 85.9%)", crime: "Money Laundering / Benami Accounts", location: "North Zone", status: "Under Trial" }
+            ],
+            ragSummary: "Found 2 strongly correlated FIR dossiers. Both instances involve unauthorized offshore wire transactions via forged corporate GSTIN certificates. Records dispatched to investigating officer dashboard."
+        },
+        {
+            query: "Cross-reference suspect alias 'Kaviarasu' with armed robbery firearm seizure logs",
+            matches: [
+                { id: "LOG-2025-3312", score: "0.061 (Cosine Sim: 93.9%)", crime: "Arms Act Violation & Burglary", location: "Central Metro Rail Yard", status: "Arrested / In Custody" },
+                { id: "INC-2023-7741", score: "0.198 (Cosine Sim: 80.2%)", crime: "Conspiracy & Extortion", location: "Industrial Estate", status: "Warrant Issued" }
+            ],
+            ragSummary: "Suspect alias matched with high confidence against 2 firearm recovery manifests. Serial numbers correlate with previously confiscated unlicensed 9mm firearms in Central Yard."
+        }
+    ];
+
+    const handleSearch = () => {
+        setSearchState('searching');
+        setTimeout(() => setSearchState('done'), 500);
     };
 
-    useEffect(() => {
-        if (simState !== 'running') return;
-        const timer = setTimeout(() => {
-            setSimState('done');
-        }, 1200);
-        return () => clearTimeout(timer);
-    }, [simState]);
+    const current = sampleQueries[selectedQuery];
 
     return (
         <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel">
-                LSTM Neural Forecast Engine v2.1
-            </div>
-            <div className="flex gap-4">
-                <div className="w-1/2">
-                    <label className="block text-[9px] uppercase text-zinc-500 mb-1">Asset</label>
-                    <div className="grid grid-cols-3 gap-1">
-                        {(['AAPL', 'NVDA', 'BTC'] as const).map(s => (
-                            <button
-                                key={s}
-                                onClick={() => { setSelectedStock(s); setSimState('idle'); }}
-                                className={`py-1 border-2 text-[10px] ${selectedStock === s ? 'bg-retro-yellow border-black font-bold' : 'bg-white'}`}
-                            >
-                                {s}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-                <div className="w-1/2">
-                    <label className="block text-[9px] uppercase text-zinc-500 mb-1">Model Layer</label>
-                    <div className="grid grid-cols-2 gap-1">
-                        {(['lstm', 'gru'] as const).map(m => (
-                            <button
-                                key={m}
-                                onClick={() => { setModel(m); setSimState('idle'); }}
-                                className={`py-1 border-2 text-[10px] uppercase ${model === m ? 'bg-retro-yellow border-black font-bold' : 'bg-white'}`}
-                            >
-                                {m}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            <div className="bg-black text-cyan-400 p-2 text-[10px] uppercase tracking-wider flex justify-between items-center">
+                <span>CRIME_INTEL://PGVECTOR_SEMANTIC_SEARCH</span>
+                <span className="animate-pulse">● LANGCHAIN4J RAG PIPELINE</span>
             </div>
 
-            <div className="border-4 border-black bg-retro-cream h-36 relative overflow-hidden flex flex-col justify-end p-2">
-                <div className="absolute top-2 left-2 text-[9px] text-zinc-500 uppercase">
-                    Asset Chart // {selectedStock} - Interval: 1D
+            {/* Query Selector */}
+            <div className="space-y-2">
+                {sampleQueries.map((q, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => { setSelectedQuery(idx); setSearchState('idle'); }}
+                        className={`w-full text-left p-2 border-2 text-[10px] uppercase transition-all ${
+                            selectedQuery === idx 
+                                ? 'bg-retro-yellow border-black text-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' 
+                                : 'bg-white border-zinc-300 text-zinc-600'
+                        }`}
+                    >
+                        Query #{idx + 1}: {q.query.substring(0, 65)}...
+                    </button>
+                ))}
+            </div>
+
+            {/* Execution Frame */}
+            <div className="border-4 border-black bg-zinc-950 p-3 text-white font-mono text-[11px] space-y-3">
+                <div className="text-zinc-400 text-[10px]">
+                    <span className="text-retro-yellow font-pixel">Active Natural Language Query:</span>
+                    <div className="mt-1 text-white bg-zinc-900 p-2 border border-zinc-800 italic">
+                        "{current.query}"
+                    </div>
                 </div>
-                
-                <div className="absolute inset-0 grid grid-rows-3 grid-cols-5 border-b border-black/10">
-                    {Array.from({ length: 15 }).map((_, i) => (
-                        <div key={i} className="border-t border-l border-black/5" />
+
+                {searchState === 'searching' && (
+                    <div className="bg-zinc-900 p-3 border-2 border-cyan-400 text-center space-y-1">
+                        <div className="text-cyan-400 text-xs animate-pulse font-pixel">GENERATING EMBEDDINGS & QUERYING PGVECTOR INDEX...</div>
+                        <div className="text-[10px] text-zinc-400">Calculating cosine distance on 1536-dimensional FIR embeddings</div>
+                    </div>
+                )}
+
+                {searchState === 'done' && (
+                    <div className="space-y-2">
+                        <div className="text-[10px] text-zinc-400 font-pixel uppercase">Top Vector Matches (pgvector index lookup):</div>
+                        {current.matches.map((m, i) => (
+                            <div key={i} className="bg-zinc-900 p-2 rounded border border-zinc-800 text-[10px] space-y-0.5">
+                                <div className="flex justify-between font-bold text-cyan-300">
+                                    <span>{m.id} // {m.crime}</span>
+                                    <span className="text-retro-yellow font-pixel">{m.score}</span>
+                                </div>
+                                <div className="text-zinc-400">Location: {m.location} | Status: {m.status}</div>
+                            </div>
+                        ))}
+
+                        <div className="mt-2 bg-zinc-900/90 border border-emerald-500/50 p-2.5 rounded text-emerald-200 text-[10px]">
+                            <div className="font-pixel text-[10px] text-emerald-400 uppercase mb-1">RAG Contextual Synthesis (Spring Boot + LangChain4j):</div>
+                            <div className="leading-relaxed font-mono">{current.ragSummary}</div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {searchState !== 'searching' && (
+                <button
+                    onClick={handleSearch}
+                    className="w-full py-2.5 bg-retro-green border-2 border-black text-xs uppercase font-pixel font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                >
+                    Execute Semantic Search &amp; RAG
+                </button>
+            )}
+        </div>
+    );
+};
+
+// 4. ICHNOS Simulator
+const IchnosSimulator: React.FC = () => {
+    const [selectedTrace, setSelectedTrace] = useState<number>(0);
+
+    const traces = [
+        {
+            traceId: "tr-9481a0e",
+            route: "POST /v1/transactions/verify",
+            duration: "58ms",
+            status: "200 OK",
+            spans: [
+                { name: "FastAPI Ingress Router", time: "4ms", width: "10%", color: "bg-emerald-500" },
+                { name: "JWT IAM Security Validation", time: "8ms", width: "16%", color: "bg-cyan-500" },
+                { name: "PostgreSQL Connection Pool", time: "14ms", width: "26%", color: "bg-blue-500" },
+                { name: "Z3 Formal Constraint Solver", time: "26ms", width: "42%", color: "bg-purple-500" },
+                { name: "Kafka Audit Event Emit", time: "6ms", width: "12%", color: "bg-amber-500" }
+            ]
+        },
+        {
+            traceId: "tr-8820c4b",
+            route: "GET /v1/telemetry/earthquake/stream",
+            duration: "142ms",
+            status: "200 OK",
+            spans: [
+                { name: "FastAPI Stream Endpoint", time: "5ms", width: "8%", color: "bg-emerald-500" },
+                { name: "Kafka Consumer Poll Window", time: "38ms", width: "30%", color: "bg-amber-500" },
+                { name: "Spark Batch Delta Compute", time: "85ms", width: "55%", color: "bg-red-500" },
+                { name: "WebSocket Push to Client", time: "14ms", width: "12%", color: "bg-cyan-500" }
+            ]
+        }
+    ];
+
+    const current = traces[selectedTrace];
+
+    return (
+        <div className="space-y-4 text-retro-charcoal font-pixel">
+            <div className="bg-black text-purple-400 p-2 text-[10px] uppercase tracking-wider flex justify-between items-center">
+                <span>ICHNOS_TRACE://DISTRIBUTED_TELEMETRY</span>
+                <span className="animate-pulse">● TRACE INSPECTOR</span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+                {traces.map((t, idx) => (
+                    <button
+                        key={idx}
+                        onClick={() => setSelectedTrace(idx)}
+                        className={`p-2 border-2 text-[10px] uppercase transition-all ${
+                            selectedTrace === idx 
+                                ? 'bg-retro-yellow border-black text-black font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' 
+                                : 'bg-white border-zinc-300 text-zinc-600'
+                        }`}
+                    >
+                        Trace #{t.traceId} ({t.duration})
+                    </button>
+                ))}
+            </div>
+
+            <div className="border-4 border-black bg-zinc-950 p-3 text-white font-mono text-[11px] space-y-3">
+                <div className="flex justify-between border-b border-zinc-800 pb-1 text-[10px]">
+                    <span className="text-zinc-300">ENDPOINT: {current.route}</span>
+                    <span className="text-emerald-400 font-pixel">{current.status} · {current.duration}</span>
+                </div>
+
+                <div className="space-y-2">
+                    <div className="text-[10px] text-zinc-400 font-pixel uppercase">Execution Span Waterfall:</div>
+                    {current.spans.map((s, idx) => (
+                        <div key={idx} className="space-y-1">
+                            <div className="flex justify-between text-[10px] text-zinc-300">
+                                <span>{s.name}</span>
+                                <span className="font-pixel text-zinc-400">{s.time}</span>
+                            </div>
+                            <div className="w-full bg-zinc-900 h-2.5 rounded overflow-hidden border border-zinc-800">
+                                <div className={`h-full ${s.color} transition-all duration-300`} style={{ width: s.width }} />
+                            </div>
+                        </div>
                     ))}
                 </div>
-
-                <svg className="w-full h-full absolute inset-0 pt-8 pb-4 px-4 overflow-visible" viewBox="0 0 100 100" preserveAspectRatio="none">
-                    <path
-                        d="M 0 70 Q 15 50 35 75 T 70 45 T 85 55"
-                        fill="none"
-                        stroke="black"
-                        strokeWidth="2.5"
-                    />
-                    
-                    {simState === 'running' && (
-                        <line 
-                            x1="85" y1="55" x2="100" y2="25"
-                            stroke="#eab308"
-                            strokeWidth="3.5"
-                            strokeDasharray="4 4"
-                        />
-                    )}
-
-                    {simState === 'done' && (
-                        <>
-                            <path 
-                                d={selectedStock === 'BTC' 
-                                    ? "M 85 55 Q 92 25 100 40" 
-                                    : selectedStock === 'AAPL' 
-                                    ? "M 85 55 L 100 50" 
-                                    : "M 85 55 Q 92 30 100 15"
-                                }
-                                fill="none"
-                                stroke="#16a34a"
-                                strokeWidth="3"
-                                strokeDasharray="3 3"
-                            />
-                            <path 
-                                d="M 85 55 Q 92 65 100 60"
-                                fill="none"
-                                stroke="#dc2626"
-                                strokeWidth="1.5"
-                                opacity="0.4"
-                            />
-                        </>
-                    )}
-                </svg>
-
-                {simState === 'running' && (
-                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-retro-yellow text-[10px] uppercase font-pixel">
-                        Running Forecast Gradient descent...
-                    </div>
-                )}
-
-                {simState === 'done' && (
-                    <div className="absolute bottom-2 right-2 bg-black text-white px-2 py-0.5 text-[9px] uppercase border border-zinc-700 font-pixel">
-                        {selectedStock === 'AAPL' ? 'Rec: Hold (Conf 64%)' : 'Rec: Buy (Conf 89%)'}
-                    </div>
-                )}
-            </div>
-
-            {simState === 'idle' && (
-                <button 
-                    onClick={runSimulation}
-                    className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Run Forecast Cycle
-                </button>
-            )}
-            {simState === 'done' && (
-                <button 
-                    onClick={() => setSimState('idle')}
-                    className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Predict Another
-                </button>
-            )}
-        </div>
-    );
-};
-
-const ImageEnhancementSimulator: React.FC = () => {
-    const [sliderVal, setSliderVal] = useState(50);
-    const [enhancementType, setEnhancementType] = useState<'denoise' | 'superres'>('superres');
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel">
-                Vision Toolkit // Model: ESRGAN_SuperResolution
-            </div>
-            
-            <div className="flex gap-2">
-                {(['superres', 'denoise'] as const).map(t => (
-                    <button
-                        key={t}
-                        onClick={() => setEnhancementType(t)}
-                        className={`flex-1 py-1 border-2 text-[10px] uppercase ${enhancementType === t ? 'bg-retro-yellow border-black font-bold' : 'bg-white'}`}
-                    >
-                        {t === 'superres' ? 'Super Resolution' : 'Artifact Denoising'}
-                    </button>
-                ))}
-            </div>
-
-            <div className="border-4 border-black relative aspect-video overflow-hidden select-none bg-zinc-200">
-                <div className="absolute inset-0 bg-retro-cream flex flex-col items-center justify-center text-center">
-                    <span className="material-symbols-outlined text-retro-charcoal text-7xl">auto_fix</span>
-                    <div className="text-[10px] font-bold text-retro-charcoal mt-1">
-                        {enhancementType === 'superres' ? 'RECONSTRUCTED (4X HD)' : 'DENOISED OUTPUT'}
-                    </div>
-                    <div className="absolute bottom-2 right-2 bg-retro-green border border-black text-retro-charcoal px-2 py-0.5 text-[9px] uppercase">
-                        ENHANCED MODEL OUTPUT
-                    </div>
-                </div>
-
-                <div 
-                    className="absolute inset-y-0 left-0 bg-zinc-300 flex items-center justify-center overflow-hidden border-r-2 border-black"
-                    style={{ width: `${sliderVal}%` }}
-                >
-                    <div className="w-[100vw] h-full flex flex-col items-center justify-center absolute left-0" style={{ width: '100%', minWidth: '400px' }}>
-                        <span className="material-symbols-outlined text-zinc-600 text-7xl grayscale blur-[2px]">auto_fix</span>
-                        <div className="text-[10px] text-zinc-600 mt-1 font-bold">
-                            {enhancementType === 'superres' ? 'BLURRY LOW-RES' : 'NOISY INPUT'}
-                        </div>
-                    </div>
-                    <div className="absolute bottom-2 left-2 bg-black text-white px-2 py-0.5 text-[9px] uppercase">
-                        RAW INPUT DATA
-                    </div>
-                </div>
-
-                <div 
-                    className="absolute inset-y-0 w-1 bg-black pointer-events-none"
-                    style={{ left: `${sliderVal}%` }}
-                />
-            </div>
-
-            <div className="space-y-1">
-                <label className="flex justify-between text-[9px] uppercase text-zinc-500">
-                    <span>Raw Input</span>
-                    <span>Compare Slider ({sliderVal}%)</span>
-                    <span>Enhanced</span>
-                </label>
-                <input 
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={sliderVal}
-                    onChange={(e) => setSliderVal(Number(e.target.value))}
-                    className="w-full accent-black bg-zinc-200 border-2 border-black h-3 cursor-pointer"
-                />
-            </div>
-            
-            <div className="text-[9px] text-zinc-500 uppercase leading-tight bg-zinc-50 border border-zinc-300 p-2">
-                Drag slider to see bilateral filtering and prior reconstruction results.
             </div>
         </div>
     );
 };
 
-const IdsSimulator: React.FC = () => {
-    const [scanState, setScanState] = useState<'idle' | 'running' | 'alert' | 'defended'>('idle');
-    const [logs, setLogs] = useState<string[]>([]);
-    const logContainerRef = useRef<HTMLDivElement>(null);
+// 5. DataRace Simulator
+const DataRaceSimulator: React.FC = () => {
+    const [isolationLevel, setIsolationLevel] = useState<'READ_COMMITTED' | 'REPEATABLE_READ' | 'SERIALIZABLE'>('READ_COMMITTED');
+    const [step, setStep] = useState(0);
 
-    const logHistory = [
-        "192.168.1.100 -> GATEWAY:80 - HTTP GET /index.html (PASS)",
-        "192.168.1.104 -> DNS_SERVER:53 - UDP QUERY repo.pack (PASS)",
-        "10.0.0.12 -> FIREWALL:443 - SSL HANDSHAKE OK (PASS)",
-        "192.168.1.100 -> GATEWAY:80 - HTTP POST /login (PASS)",
-        "SYSTEM STATUS: NETWORK LOAD NORMAL. STACK SECURE.",
-        "ALERT PRE-CHECK: DETECTING METRIC ANOMALIES...",
-        "WARNING: INCOMING TCP STREAM RAPID SEQUENCE FROM IP 185.12.44.9",
-        "185.12.44.9 -> HOST:22 - TCP SYN PACKET RECEIVED",
-        "185.12.44.9 -> HOST:23 - TCP SYN PACKET RECEIVED",
-        "185.12.44.9 -> HOST:80 - TCP SYN PACKET RECEIVED",
-        "185.12.44.9 -> HOST:443 - TCP SYN PACKET RECEIVED",
-        "WARNING: PORT SCAN SCANNING SIGNATURE MATCHED (CONF 98.4%)",
-        "CRITICAL: INTRUSION VECTOR DETECTED from 185.12.44.9!",
-        "ACTION REQUIRED: ACTIVATE NETWORK SHIELD BAN PROTOCOL",
-        "PROTOCOL ACTIVE: IP 185.12.44.9 IS DROPPED AT FIREWALL LEVEL.",
-        "SYSTEM RECOVERY: RESTORING ROUTING PACKET FLOWS...",
-        "SYSTEM HEALTH: 100% STABLE. FIREWALL SHIELDS: ARMED.",
+    const steps = [
+        { label: "Step 0: Initial State", t1: "IDLE", t2: "IDLE", balance: 100, desc: "Shared account balance = $100." },
+        { label: "Step 1: Tx1 Reads Balance", t1: "READ balance ($100)", t2: "IDLE", balance: 100, desc: "Tx1 prepares to withdraw $40." },
+        { label: "Step 2: Tx2 Interleaves & Reads", t1: "PAUSED", t2: "READ balance ($100)", balance: 100, desc: "Tx2 prepares to withdraw $80 simultaneously." },
+        { label: "Step 3: Tx1 Writes Balance ($60)", t1: "WRITE balance = $60 & COMMIT", t2: "PAUSED", balance: 60, desc: "Tx1 subtracts $40 and commits." },
+        { label: "Step 4: Tx2 Overwrites ($20)", t1: "DONE", t2: "WRITE balance = $20 & COMMIT", balance: 20, desc: "Tx2 overwrites based on stale $100 read! ($100 - $80 = $20). Lost Update anomaly!" }
     ];
 
-    useEffect(() => {
-        if (logContainerRef.current) {
-            logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-        }
-    }, [logs]);
-
-    const runIDS = () => {
-        setScanState('running');
-        setLogs([]);
+    const handleNextStep = () => {
+        setStep(prev => (prev + 1) % steps.length);
     };
 
-    useEffect(() => {
-        if (scanState !== 'running') return;
-        let index = 0;
-        let active = true;
-
-        const runInterval = () => {
-            if (!active) return;
-            if (index < logHistory.length) {
-                const currentLine = logHistory[index];
-                setLogs(l => [...l, currentLine]);
-                
-                if (currentLine.startsWith("WARNING: INCOMING")) {
-                    setScanState('alert');
-                }
-                
-                index++;
-                setTimeout(runInterval, index < 5 ? 300 : index < 12 ? 600 : 350);
-            } else {
-                setScanState('defended');
-            }
-        };
-
-        runInterval();
-        return () => { active = false; };
-    }, [scanState]);
+    const currentStep = steps[step];
 
     return (
         <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel">
-                Intrusion Detection System Console v0.8.2
+            <div className="bg-black text-rose-400 p-2 text-[10px] uppercase tracking-wider flex justify-between items-center">
+                <span>DATARACE://CONCURRENCY_INTERLEAVING_ENGINE</span>
+                <span className="animate-pulse">● ISOLATION TESTER</span>
             </div>
 
-            <div 
-                ref={logContainerRef}
-                className="h-32 border-4 border-black bg-zinc-900 text-green-400 p-2 text-[9px] uppercase leading-tight overflow-y-auto space-y-1 shadow-[inset_0px_0px_8px_rgba(0,255,0,0.4)]"
+            <div className="border-4 border-black bg-zinc-950 p-3 text-white font-mono text-[11px] space-y-3">
+                <div className="flex justify-between border-b border-zinc-800 pb-1 text-[10px]">
+                    <span className="text-zinc-400">{currentStep.label}</span>
+                    <span className="text-retro-yellow font-pixel">ACCOUNT_BALANCE: ${currentStep.balance}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[10px]">
+                    <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 font-pixel mb-1">TRANSACTION #1</div>
+                        <div className="text-cyan-300">{currentStep.t1}</div>
+                    </div>
+                    <div className="bg-zinc-900 p-2 rounded border border-zinc-800">
+                        <div className="text-zinc-400 font-pixel mb-1">TRANSACTION #2</div>
+                        <div className="text-purple-300">{currentStep.t2}</div>
+                    </div>
+                </div>
+
+                <div className="bg-zinc-900 p-2 rounded border border-zinc-800 text-[10px] text-zinc-300">
+                    <span className="font-pixel text-zinc-400 uppercase block mb-0.5">Scheduler Analysis:</span>
+                    {currentStep.desc}
+                </div>
+
+                {step === 4 && (
+                    <div className="bg-red-950/80 border-2 border-red-500 p-2 text-red-200 text-[10px] font-pixel">
+                        ⚠ RACE CONDITION DETECTED: Total money withdrawn = $120 from initial $100 balance. Final state $20 violates conservation invariants!
+                    </div>
+                )}
+            </div>
+
+            <button
+                onClick={handleNextStep}
+                className="w-full py-2.5 bg-retro-orange border-2 border-black text-xs uppercase font-pixel font-bold shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
             >
-                {logs.length === 0 ? (
-                    <div className="text-zinc-500 italic text-center pt-10">Click "Arm Firewall" to start log monitoring.</div>
-                ) : (
-                    logs.map((log, idx) => {
-                        let color = "text-green-400";
-                        if (log.startsWith("WARNING:")) color = "text-yellow-400";
-                        if (log.startsWith("CRITICAL:") || log.startsWith("ALERT:")) color = "text-red-500 font-bold animate-pulse";
-                        if (log.startsWith("PROTOCOL ACTIVE:")) color = "text-retro-orange font-bold";
-                        if (log.startsWith("SYSTEM HEALTH:")) color = "text-sky-400 font-bold";
-                        return (
-                            <div key={idx} className={color}>
-                                &gt; {log}
-                            </div>
-                        );
-                    })
-                )}
-            </div>
-
-            {scanState === 'idle' && (
-                <button 
-                    onClick={runIDS}
-                    className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Arm Firewall & Scan
-                </button>
-            )}
-
-            {scanState === 'alert' && (
-                <div className="bg-red-950/20 border-2 border-red-600 p-2 text-center text-xs text-red-500 font-bold animate-pulse uppercase">
-                    ALERT! Port Scan Detected! Blocking IP Address...
-                </div>
-            )}
-
-            {scanState === 'defended' && (
-                <button 
-                    onClick={() => { setScanState('idle'); setLogs([]); }}
-                    className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Reset Console
-                </button>
-            )}
-        </div>
-    );
-};
-
-const MessyDataSimulator: React.FC = () => {
-    const [step, setStep] = useState<'idle' | 'ingesting' | 'fuzzy' | 'reconciliation' | 'done'>('idle');
-    const [ingestLogs, setIngestLogs] = useState<string[]>([]);
-    const [activeSource, setActiveSource] = useState<'none' | 'pg' | 'api' | 'csv'>('none');
-    const [progress, setProgress] = useState(0);
-    const [reconciliationDecision, setReconciliationDecision] = useState<'none' | 'merge' | 'split'>('none');
-
-    const runPipeline = () => {
-        setStep('ingesting');
-        setIngestLogs([]);
-        setProgress(0);
-    };
-
-    useEffect(() => {
-        if (step !== 'ingesting') return;
-
-        const timeline = [
-            { source: 'pg', time: 300, log: "Initializing Multi-Source ETL Pipeline Engine..." },
-            { source: 'pg', time: 800, log: "[Legacy DB] Connecting to PostgreSQL datastore..." },
-            { source: 'pg', time: 1300, log: "[Legacy DB] Executing query: SELECT id, name, email, phone, location FROM customer_profiles..." },
-            { source: 'pg', time: 1800, log: "[Legacy DB] Successfully fetched 500 legacy records." },
-            
-            { source: 'api', time: 2400, log: "[SaaS API] Initializing dynamic SaaS API connector..." },
-            { source: 'api', time: 2900, log: "[SaaS API] GET https://api.saas-client.com/v1/users?limit=100" },
-            { source: 'api', time: 3400, log: "[SaaS API] WARNING: HTTP 429 Too Many Requests detected!" },
-            { source: 'api', time: 3900, log: "[SaaS API] BACKOFF: Inspecting 'Retry-After: 2s' header. Waiting before retry..." },
-            { source: 'api', time: 6000, log: "[SaaS API] RETRY: (Attempt 1) with jitter (tenacity block)..." },
-            { source: 'api', time: 6500, log: "[SaaS API] WARNING: HTTP 503 Service Unavailable!" },
-            { source: 'api', time: 7000, log: "[SaaS API] BACKOFF: Exponential retry (Attempt 2)..." },
-            { source: 'api', time: 9200, log: "[SaaS API] RETRY: (Attempt 2) GET https://api.saas-client.com/v1/users..." },
-            { source: 'api', time: 9700, log: "[SaaS API] SUCCESS: HTTP 200 OK. Ingested 350 profiles." },
-
-            { source: 'csv', time: 10400, log: "[CSV Export] Scanning regional directory for CSV exports..." },
-            { source: 'csv', time: 10900, log: "[CSV Export] Found 'regional_export_2026_07.csv'. Normalizing malformed columns..." },
-            { source: 'csv', time: 11400, log: "[CSV Export] Cleaned 380 profiles (mapped phone format + lowercased emails)." },
-            { source: 'none', time: 12000, log: "ETL INGESTION PHASE COMPLETE: 1,230 raw records cached in staging." }
-        ];
-
-        let index = 0;
-        const start = Date.now();
-
-        const timer = setInterval(() => {
-            const elapsed = Date.now() - start;
-            while (index < timeline.length && timeline[index].time <= elapsed) {
-                const item = timeline[index];
-                setIngestLogs(prev => [...prev, item.log]);
-                setActiveSource(item.source as any);
-                setProgress(Math.min(100, Math.round((index / timeline.length) * 100)));
-                index++;
-            }
-
-            if (index >= timeline.length) {
-                clearInterval(timer);
-                setProgress(100);
-                setTimeout(() => {
-                    setStep('fuzzy');
-                }, 1000);
-            }
-        }, 100);
-
-        return () => clearInterval(timer);
-    }, [step]);
-
-    const [fuzzyLogs, setFuzzyLogs] = useState<string[]>([]);
-    useEffect(() => {
-        if (step !== 'fuzzy') return;
-
-        const fuzzyTimeline = [
-            "Initializing Fuzzy Matching Reconciliation Engine (RapidFuzz v3.4.0)...",
-            "Mapping cross-record similarity comparison grid...",
-            "COMPARE: 'John Doe' (Legacy DB) vs 'Jon Doe' (SaaS API) -> Token Sort Ratio: 92%",
-            "DECISION: Auto-Merge [John Doe] (Confidence 92% >= 85% threshold)",
-            "COMPARE: 'Alice Smith' (Legacy DB) vs 'Bob Smith' (CSV) -> Token Sort Ratio: 32%",
-            "DECISION: Keep Separate [Bob Smith] (Confidence 32% < 60% threshold)",
-            "COMPARE: 'Anirudh Sudheer' (SaaS API) vs 'Sudheer Anirudh' (CSV) -> Token Sort Ratio: 78%",
-            "DECISION: Suspect Duplicate! Routing to Operator Review Queue (78% in 60%-85% window)",
-            "Fuzzy processing complete. 1 matching task requires operator review."
-        ];
-
-        let index = 0;
-        const timer = setInterval(() => {
-            if (index < fuzzyTimeline.length) {
-                setFuzzyLogs(prev => [...prev, fuzzyTimeline[index]]);
-                index++;
-            } else {
-                clearInterval(timer);
-                setTimeout(() => {
-                    setStep('reconciliation');
-                }, 1500);
-            }
-        }, 500);
-
-        return () => clearInterval(timer);
-    }, [step]);
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel flex justify-between">
-                <span>System: MessyData ETL v1.0.0</span>
-                {step !== 'idle' && step !== 'done' && <span className="animate-pulse">Processing...</span>}
-            </div>
-
-            {step === 'idle' && (
-                <div className="border-4 border-black bg-white aspect-video p-6 flex flex-col justify-between items-center text-center">
-                    <div className="space-y-2 mt-4">
-                        <span className="material-symbols-outlined text-6xl text-retro-charcoal animate-bounce">database</span>
-                        <div className="text-sm font-bold uppercase">MessyData Reconciliation Pipeline</div>
-                        <div className="text-[10px] text-zinc-500 max-w-sm uppercase leading-relaxed font-body">
-                            Resolve duplicate customer entries across multiple flaky and mismatched systems using fuzzy matching and a Streamlit manual review queue.
-                        </div>
-                    </div>
-                    <button
-                        onClick={runPipeline}
-                        className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                    >
-                        Load & Run ETL Pipeline
-                    </button>
-                </div>
-            )}
-
-            {step === 'ingesting' && (
-                <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2">
-                        <div className={`border-2 p-2 text-center text-[10px] uppercase ${activeSource === 'pg' ? 'bg-retro-yellow border-black text-black font-bold animate-pulse' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            <span className="material-symbols-outlined text-sm block">storage</span>
-                            Legacy DB
-                        </div>
-                        <div className={`border-2 p-2 text-center text-[10px] uppercase ${activeSource === 'api' ? 'bg-retro-yellow border-black text-black font-bold animate-pulse' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            <span className="material-symbols-outlined text-sm block">cloud_sync</span>
-                            Flaky API
-                        </div>
-                        <div className={`border-2 p-2 text-center text-[10px] uppercase ${activeSource === 'csv' ? 'bg-retro-yellow border-black text-black font-bold animate-pulse' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            <span className="material-symbols-outlined text-sm block">description</span>
-                            CSV Exports
-                        </div>
-                    </div>
-
-                    <div className="h-32 border-4 border-black bg-zinc-900 text-green-400 p-2 text-[9px] uppercase leading-tight overflow-y-auto space-y-1 font-pixel shadow-[inset_0px_0px_6px_rgba(0,255,0,0.3)]">
-                        {ingestLogs.map((log, i) => {
-                            let color = "text-green-400";
-                            if (log.includes("WARNING")) color = "text-yellow-400";
-                            if (log.includes("BACKOFF")) color = "text-retro-orange font-bold";
-                            if (log.includes("SUCCESS") || log.includes("COMPLETE")) color = "text-sky-400 font-bold";
-                            return <div key={i} className={color}>&gt; {log}</div>;
-                        })}
-                    </div>
-
-                    <div className="w-full bg-zinc-200 h-4 border-2 border-black overflow-hidden relative">
-                        <div className="bg-retro-orange h-full transition-all duration-100" style={{ width: `${progress}%` }} />
-                        <div className="absolute inset-0 flex items-center justify-center text-[9px] font-pixel text-black font-bold">
-                            INGESTION PROGRESS: {progress}%
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {step === 'fuzzy' && (
-                <div className="space-y-3">
-                    <div className="border-4 border-black bg-zinc-900 text-green-400 p-4 aspect-video flex flex-col justify-between overflow-hidden shadow-[inset_0px_0px_8px_rgba(0,255,0,0.3)]">
-                        <div className="space-y-1 overflow-y-auto h-full text-[9px] font-pixel uppercase leading-snug">
-                            {fuzzyLogs.map((log, i) => {
-                                let color = "text-green-400";
-                                if (log.includes("AUTO-MERGE") || log.includes("Score: 92%")) color = "text-sky-400 font-bold";
-                                if (log.includes("SUSPECT") || log.includes("Score: 78%")) color = "text-yellow-400 font-bold animate-pulse";
-                                if (log.includes("SEPARATE")) color = "text-zinc-400";
-                                return <div key={i} className={color}>&gt;&gt; {log}</div>;
-                            })}
-                        </div>
-                        <div className="border-t border-green-800/40 pt-2 text-[9px] text-green-500 font-pixel animate-pulse">
-                            COMPUTING RAPIDFUZZ MATRIX EMBEDDINGS...
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {step === 'reconciliation' && (
-                <div className="space-y-3">
-                    <div className="bg-retro-orange/20 border-2 border-retro-orange p-2 text-center text-[9px] uppercase font-bold text-retro-orange">
-                        ⚠️ 1 Suspect Duplicate Record in Manual Review Queue (Streamlit UI)
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3 text-[10px]">
-                        <div className="border-2 border-black p-3 bg-white space-y-2 relative">
-                            <div className="absolute top-1 right-2 bg-retro-charcoal text-white text-[8px] px-1 font-pixel uppercase">Record A (API)</div>
-                            <div className="font-pixel border-b pb-1 font-bold text-zinc-800 uppercase mt-2">SaaS API Entry</div>
-                            <div className="space-y-1 font-body text-[11px]">
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Name</span> Anirudh Sudheer</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Email</span> anirudhsudheer@gmail.com</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Phone</span> +91 95391 02851</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Location</span> Kozhikode, India</div>
-                            </div>
-                        </div>
-
-                        <div className="border-2 border-black p-3 bg-white space-y-2 relative">
-                            <div className="absolute top-1 right-2 bg-retro-charcoal text-white text-[8px] px-1 font-pixel uppercase">Record B (CSV)</div>
-                            <div className="font-pixel border-b pb-1 font-bold text-zinc-800 uppercase mt-2">CSV Export Entry</div>
-                            <div className="space-y-1 font-body text-[11px]">
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Name</span> Sudheer Anirudh</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Email</span> anirudhsudheer@outlook.com</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Phone</span> 9539102851</div>
-                                <div><span className="font-pixel text-[8px] text-zinc-400 block uppercase">Location</span> Calicut, Kerala</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {reconciliationDecision === 'none' ? (
-                        <div className="flex gap-2 pt-2">
-                            <button
-                                onClick={() => setReconciliationDecision('merge')}
-                                className="flex-1 py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                            >
-                                Merge & Enrich
-                            </button>
-                            <button
-                                onClick={() => setReconciliationDecision('split')}
-                                className="flex-1 py-2 bg-white border-2 border-zinc-400 text-zinc-600 text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,0.15)] active:translate-x-[2px] active:translate-y-[2px]"
-                            >
-                                Keep Separate
-                            </button>
-                        </div>
-                    ) : reconciliationDecision === 'merge' ? (
-                        <div className="space-y-3">
-                            <div className="bg-green-100 border-2 border-retro-green p-2 text-[10px] text-green-700 font-bold uppercase text-center rounded">
-                                ✔️ profiles merged successfully! target lineage updated.
-                            </div>
-                            <div className="bg-black text-sky-400 p-2.5 rounded border border-zinc-700 font-pixel text-[8px] overflow-x-auto whitespace-pre-wrap leading-tight shadow-[0px_0px_8px_rgba(56,189,248,0.25)]">
-{`PROVENANCE AUDIT TRAIL LOG:
-{
-  "merged_id": "usr_94a8f",
-  "primary_name": "Anirudh Sudheer",
-  "contacts": [
-    "anirudhsudheer@gmail.com",
-    "anirudhsudheer@outlook.com"
-  ],
-  "lineage": [
-    { "source": "SaaS_API", "record_id": "api_402", "confidence": "78%" },
-    { "source": "CSV_Export", "record_id": "csv_109", "confidence": "100%" }
-  ]
-}`}
-                            </div>
-                            <button
-                                onClick={() => setStep('done')}
-                                className="w-full py-2 bg-retro-charcoal text-white border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                            >
-                                View Final Pipeline Audit
-                            </button>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            <div className="bg-zinc-100 border-2 border-zinc-400 p-2 text-[10px] text-zinc-600 font-bold uppercase text-center rounded">
-                                ❌ profiles separated. new profile 'usr_94a90' registered.
-                            </div>
-                            <button
-                                onClick={() => setStep('done')}
-                                className="w-full py-2 bg-retro-charcoal text-white border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
-                            >
-                                View Final Pipeline Audit
-                            </button>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {step === 'done' && (
-                <div className="border-4 border-black bg-retro-cream p-4 space-y-4">
-                    <div className="font-pixel text-[10px] uppercase text-zinc-500 border-b pb-1 border-black/10">Pipeline Execution Report Card</div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-pixel">
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">Ingested Raw</div>
-                            <div className="text-base font-bold text-retro-charcoal">1,230</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">Clean/Unified</div>
-                            <div className="text-base font-bold text-retro-green">1,017</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">Auto-Merged</div>
-                            <div className="text-base font-bold text-sky-500">212</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">Manual Matches</div>
-                            <div className="text-base font-bold text-retro-orange">1</div>
-                        </div>
-                    </div>
-
-                    <div className="text-[9px] uppercase leading-relaxed text-zinc-500 bg-white p-2 border-2 border-dashed border-black/15">
-                        * Ingested SaaS Rest API navigated 2 server failures & 1 rate limit using tenacity backoff.
-                        <br/>
-                        * Normalized phone format drift & lowercased emails before fuzzy indexing.
-                    </div>
-
-                    <button
-                        onClick={() => {
-                            setStep('idle');
-                            setIngestLogs([]);
-                            setFuzzyLogs([]);
-                            setReconciliationDecision('none');
-                        }}
-                        className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                    >
-                        Restart Simulator
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const CommunityConnectSimulator: React.FC = () => {
-    const [step, setStep] = useState<'idle' | 'auth' | 'claims' | 'supabase_rls' | 'realtime' | 'done'>('idle');
-    
-    // Auth Step State
-    const [phoneNumber, setPhoneNumber] = useState('+91 95391 02851');
-    const [authLogs, setAuthLogs] = useState<string[]>([]);
-    const [otpSent, setOtpSent] = useState(false);
-    const [otpCode, setOtpCode] = useState('');
-    const [otpError, setOtpError] = useState(false);
-
-    // Claims Step State
-    const [claimsLogs, setClaimsLogs] = useState<string[]>([]);
-
-    // Supabase RLS Step State
-    const [rlsLogs, setRlsLogs] = useState<string[]>([]);
-
-    // Realtime Broadcast Step State
-    const [announcementText, setAnnouncementText] = useState('Urgent: Panchayat ward assembly meeting rescheduled to Sunday 9 AM.');
-    const [broadcastLogs, setBroadcastLogs] = useState<string[]>([]);
-    const [isBroadcasting, setIsBroadcasting] = useState(false);
-    const [phoneScreenOn, setPhoneScreenOn] = useState(false);
-    const [notificationReceived, setNotificationReceived] = useState(false);
-
-    // Run auth flow
-    const triggerSendOtp = () => {
-        if (!phoneNumber) return;
-        setAuthLogs(prev => [...prev, `[Firebase Auth] Sending verification SMS OTP to ${phoneNumber}...`]);
-        setTimeout(() => {
-            setAuthLogs(prev => [...prev, `[Firebase Auth] SMS OTP delivered successfully. Code: 481029`]);
-            setOtpSent(true);
-        }, 1200);
-    };
-
-    const verifyOtp = () => {
-        if (otpCode === '481029') {
-            setAuthLogs(prev => [...prev, `[Firebase Auth] Code verified. Session ID fb_sess_x918 created.`]);
-            setTimeout(() => {
-                setStep('claims');
-            }, 1000);
-        } else {
-            setOtpError(true);
-            setAuthLogs(prev => [...prev, `[Firebase Auth] ERROR: Invalid OTP verification code. Try again.`]);
-        }
-    };
-
-    // Firebase custom claims injection trigger simulation
-    useEffect(() => {
-        if (step !== 'claims') return;
-        setClaimsLogs([]);
-        
-        const claimsTimeline = [
-            { time: 200, log: "Initializing Firebase Cloud Function triggers..." },
-            { time: 800, log: "[Cloud Function] user_created_trigger.js: New sign-up detected for uid 'fb_usr_881b2'." },
-            { time: 1400, log: "[Cloud Function] Fetching Supabase target schema specifications..." },
-            { time: 2000, log: "[Cloud Function] Injecting custom claims: { role: 'authenticated', provider: 'firebase' }" },
-            { time: 2600, log: "[Cloud Function] Syncing session token claims. Metadata validation complete." },
-            { time: 3200, log: "SUCCESS: Custom claims injected into Firebase Auth JWT." }
-        ];
-
-        let index = 0;
-        const timer = setInterval(() => {
-            if (index < claimsTimeline.length) {
-                setClaimsLogs(prev => [...prev, claimsTimeline[index].log]);
-                index++;
-            } else {
-                clearInterval(timer);
-                setTimeout(() => {
-                    setStep('supabase_rls');
-                }, 1200);
-            }
-        }, 600);
-
-        return () => clearInterval(timer);
-    }, [step]);
-
-    // Supabase RLS verification simulation
-    useEffect(() => {
-        if (step !== 'supabase_rls') return;
-        setRlsLogs([]);
-
-        const rlsTimeline = [
-            "Initializing Supabase Client...",
-            "Passing Firebase JWT Token to session cache...",
-            "supabase.auth.setSession({ access_token: Firebase_OIDC_JWT })",
-            "Supabase DB: Decoded JWT claims headers...",
-            "Checking claims -> auth.jwt() ->> 'role' = 'authenticated'",
-            "Evaluating policy 'select_announcements' on table 'announcements'...",
-            "RLS rule: USING (auth.jwt() ->> 'role' = 'authenticated' AND auth.jwt() ->> 'provider' = 'firebase')",
-            "Result: TRUE -> Access GRANTED.",
-            "Supabase RLS evaluation PASSED! Data fetched successfully."
-        ];
-
-        let index = 0;
-        const timer = setInterval(() => {
-            if (index < rlsTimeline.length) {
-                setRlsLogs(prev => [...prev, rlsTimeline[index]]);
-                index++;
-            } else {
-                clearInterval(timer);
-                setTimeout(() => {
-                    setStep('realtime');
-                }, 1500);
-            }
-        }, 500);
-
-        return () => clearInterval(timer);
-    }, [step]);
-
-    // Broadcast FCM Push & Real-time Channel simulation
-    const runBroadcast = () => {
-        if (!announcementText) return;
-        setIsBroadcasting(true);
-        setBroadcastLogs([`[Supabase Realtime] Initiating announcement broadcast...`]);
-
-        setTimeout(() => {
-            setBroadcastLogs(prev => [...prev, `[Supabase Realtime] Payload pushed to channel 'ward_9_announcements'.`]);
-        }, 800);
-
-        setTimeout(() => {
-            setBroadcastLogs(prev => [...prev, `[Firebase Admin SDK] Triggered FCM push request for ward 9 family devices.`]);
-            setPhoneScreenOn(true);
-        }, 1500);
-
-        setTimeout(() => {
-            setBroadcastLogs(prev => [...prev, `[FCM Engine] Broadcast complete. Pushed alerts to 125 active app instances.`]);
-            setNotificationReceived(true);
-            setIsBroadcasting(false);
-        }, 2500);
-    };
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel flex justify-between">
-                <span>System: CommunityConnect Staging Sandbox v0.1.0-beta</span>
-                {step !== 'idle' && step !== 'done' && <span className="animate-pulse">Active Sandbox</span>}
-            </div>
-
-            {step === 'idle' && (
-                <div className="border-4 border-black bg-white aspect-video p-6 flex flex-col justify-between items-center text-center">
-                    <div className="space-y-2 mt-4">
-                        <span className="material-symbols-outlined text-6xl text-retro-charcoal animate-bounce">groups</span>
-                        <div className="text-sm font-bold uppercase">CommunityConnect Beta Sandbox</div>
-                        <div className="text-[10px] text-zinc-500 max-w-sm uppercase leading-relaxed font-body">
-                            Simulate the hybrid auth flow connecting Firebase Auth to Supabase database, and test real-time push notification broadcasts.
-                        </div>
-                    </div>
-                    <button
-                        onClick={() => setStep('auth')}
-                        className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                    >
-                        Initialize Beta Sandbox
-                    </button>
-                </div>
-            )}
-
-            {step === 'auth' && (
-                <div className="space-y-3">
-                    <div className="border-2 border-black p-3 bg-white space-y-3">
-                        <div className="text-[10px] uppercase font-bold text-zinc-500">Firebase OTP Signup Simulator</div>
-                        
-                        <div className="space-y-1">
-                            <label className="text-[9px] text-zinc-400 block uppercase">Mobile Number</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="text"
-                                    value={phoneNumber}
-                                    onChange={(e) => setPhoneNumber(e.target.value)}
-                                    disabled={otpSent}
-                                    className="flex-grow border-2 border-black px-2 py-1 text-xs font-pixel bg-retro-cream text-black"
-                                />
-                                <button
-                                    onClick={triggerSendOtp}
-                                    disabled={otpSent}
-                                    className="px-3 bg-retro-yellow border-2 border-black text-[10px] uppercase font-bold disabled:opacity-50"
-                                >
-                                    Send OTP
-                                </button>
-                            </div>
-                        </div>
-
-                        {otpSent && (
-                            <div className="space-y-1 animate-fade-in">
-                                <label className="text-[9px] text-zinc-400 block uppercase">Enter SMS OTP Code (Delivered: 481029)</label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter code"
-                                        value={otpCode}
-                                        onChange={(e) => {
-                                            setOtpCode(e.target.value);
-                                            setOtpError(false);
-                                        }}
-                                        className={`flex-grow border-2 px-2 py-1 text-xs font-pixel bg-retro-cream text-black ${otpError ? 'border-red-500' : 'border-black'}`}
-                                    />
-                                    <button
-                                        onClick={verifyOtp}
-                                        className="px-3 bg-retro-green border-2 border-black text-[10px] uppercase font-bold"
-                                    >
-                                        Verify
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="h-28 border-4 border-black bg-zinc-900 text-green-400 p-2 text-[9px] uppercase leading-tight overflow-y-auto space-y-1 font-pixel shadow-[inset_0px_0px_6px_rgba(0,255,0,0.3)]">
-                        {authLogs.length === 0 ? (
-                            <div className="text-zinc-500">&gt; Waiting to start OTP flow...</div>
-                        ) : (
-                            authLogs.map((log, i) => <div key={i}>&gt; {log}</div>)
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {step === 'claims' && (
-                <div className="space-y-3">
-                    <div className="border-4 border-black bg-zinc-900 text-green-400 p-4 aspect-video flex flex-col justify-between overflow-hidden shadow-[inset_0px_0px_8px_rgba(0,255,0,0.3)]">
-                        <div className="space-y-1 overflow-y-auto h-full text-[9px] font-pixel uppercase leading-snug">
-                            {claimsLogs.map((log, i) => {
-                                let color = "text-green-400";
-                                if (log.includes("Injecting") || log.includes("claims:")) color = "text-yellow-400 font-bold";
-                                if (log.includes("SUCCESS")) color = "text-sky-400 font-bold animate-pulse";
-                                return <div key={i} className={color}>&gt; {log}</div>;
-                            })}
-                        </div>
-                        <div className="border-t border-green-800/40 pt-2 text-[9px] text-green-500 font-pixel animate-pulse">
-                            FIREBASE AUTH TRIGGERS RUNNING...
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {step === 'supabase_rls' && (
-                <div className="space-y-3">
-                    <div className="border-4 border-black bg-zinc-900 text-green-400 p-4 aspect-video flex flex-col justify-between overflow-hidden shadow-[inset_0px_0px_8px_rgba(0,255,0,0.3)]">
-                        <div className="space-y-1 overflow-y-auto h-full text-[9px] font-pixel uppercase leading-snug">
-                            {rlsLogs.map((log, i) => {
-                                let color = "text-green-400";
-                                if (log.includes("auth.jwt()")) color = "text-yellow-400";
-                                if (log.includes("GRANTED") || log.includes("PASSED")) color = "text-sky-400 font-bold animate-pulse";
-                                return <div key={i} className={color}>&gt; {log}</div>;
-                            })}
-                        </div>
-                        <div className="border-t border-green-800/40 pt-2 text-[9px] text-green-500 font-pixel animate-pulse">
-                            SUPABASE ROW-LEVEL SECURITY POLICY ENGINE...
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {step === 'realtime' && (
-                <div className="space-y-3">
-                    <div className="bg-retro-green/20 border-2 border-retro-green p-2 text-center text-[9px] uppercase font-bold text-retro-green">
-                        ✔️ Firebase/Supabase Session Synced. Broadcaster Ready.
-                    </div>
-
-                    <div className="grid grid-cols-5 gap-3 text-[10px]">
-                        <div className="col-span-3 border-2 border-black p-3 bg-white space-y-3 flex flex-col justify-between">
-                            <div>
-                                <div className="font-pixel border-b pb-1 font-bold text-zinc-800 uppercase text-[9px]">Admin Panel Console</div>
-                                <div className="space-y-2 mt-2">
-                                    <label className="font-pixel text-[8px] text-zinc-400 block uppercase">Announcement Text</label>
-                                    <textarea
-                                        value={announcementText}
-                                        onChange={(e) => setAnnouncementText(e.target.value)}
-                                        disabled={isBroadcasting}
-                                        rows={3}
-                                        className="w-full border-2 border-black p-1 text-[9px] font-pixel bg-retro-cream text-black resize-none uppercase leading-snug"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <button
-                                onClick={runBroadcast}
-                                disabled={isBroadcasting}
-                                className="w-full py-1.5 bg-retro-orange border-2 border-black text-[9px] uppercase font-bold shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50 text-black"
-                            >
-                                {isBroadcasting ? "Broadcasting..." : "Broadcast Alert"}
-                            </button>
-                        </div>
-
-                        <div className="col-span-2 flex flex-col items-center justify-center">
-                            <div className={`w-28 h-48 border-4 border-black rounded-lg bg-zinc-950 p-1 flex flex-col justify-between relative transition-all duration-300 ${phoneScreenOn ? 'shadow-[0px_0px_12px_rgba(251,191,36,0.3)]' : ''}`}>
-                                <div className="w-8 h-1 bg-black rounded-full mx-auto" />
-                                
-                                <div className={`flex-grow border-2 border-black rounded mt-1 bg-zinc-900 overflow-hidden relative flex flex-col justify-between p-1.5 transition-colors duration-300 ${phoneScreenOn ? 'bg-sky-900/45' : 'bg-black'}`}>
-                                    {phoneScreenOn ? (
-                                        <>
-                                            <div className="flex justify-between text-[6px] text-white/60 font-pixel uppercase">
-                                                <span>12:00</span>
-                                                <span>fcm 📶</span>
-                                            </div>
-                                            
-                                            {notificationReceived && (
-                                                <div className="bg-white border border-black p-1 rounded space-y-1 shadow-md animate-bounce mt-2 text-black">
-                                                    <div className="flex items-center gap-0.5 text-black">
-                                                        <span className="material-symbols-outlined text-[8px]">groups</span>
-                                                        <span className="text-[6px] font-bold font-pixel uppercase tracking-tight">CommunityConnect</span>
-                                                    </div>
-                                                    <div className="text-[6px] font-body text-zinc-700 leading-tight uppercase font-bold">
-                                                        {announcementText.length > 50 ? announcementText.substring(0, 47) + '...' : announcementText}
-                                                    </div>
-                                                </div>
-                                            )}
-
-                                            <div className="text-center text-[7px] text-white/40 uppercase mt-auto mb-1">
-                                                Beta Mobile Client
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <div className="m-auto text-[7px] text-zinc-700 uppercase">OFFLINE</div>
-                                    )}
-                                </div>
-
-                                <div className="w-3 h-3 border border-zinc-700 rounded-full mx-auto mt-1 cursor-pointer" />
-                            </div>
-                            <span className="text-[8px] text-zinc-500 uppercase mt-1">Mock Mobile App</span>
-                        </div>
-                    </div>
-
-                    <div className="h-16 border-2 border-black bg-zinc-900 text-green-400 p-1 text-[8px] uppercase leading-tight overflow-y-auto space-y-0.5 font-pixel">
-                        {broadcastLogs.map((log, i) => <div key={i}>&gt; {log}</div>)}
-                    </div>
-
-                    {notificationReceived && (
-                        <button
-                            onClick={() => setStep('done')}
-                            className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] text-black"
-                        >
-                            Verify & Finish Testing
-                        </button>
-                    )}
-                </div>
-            )}
-
-            {step === 'done' && (
-                <div className="border-4 border-black bg-retro-cream p-4 space-y-4">
-                    <div className="font-pixel text-[10px] uppercase text-zinc-500 border-b pb-1 border-black/10">Staging Sandbox Verification Card</div>
-                    
-                    <div className="grid grid-cols-2 gap-2 text-[10px] font-pixel">
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">OIDC Provider</div>
-                            <div className="text-xs font-bold text-retro-charcoal">Firebase</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">Target Database</div>
-                            <div className="text-xs font-bold text-retro-green">Supabase DB</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">RLS Policies</div>
-                            <div className="text-xs font-bold text-sky-500">Verified</div>
-                        </div>
-                        <div className="border border-black/15 bg-white p-2 text-center">
-                            <div className="text-zinc-400 uppercase text-[8px]">FCM Channels</div>
-                            <div className="text-xs font-bold text-retro-orange">Broadcasting</div>
-                        </div>
-                    </div>
-
-                    <div className="text-[9px] uppercase leading-relaxed text-zinc-500 bg-white p-2 border-2 border-dashed border-black/15">
-                        * Custom OIDC claim injection prevents unauthorized Supabase table mutations.
-                        <br/>
-                        * Staging environment configured for real-time Firebase OTP verification loops.
-                    </div>
-
-                    <button
-                        onClick={() => {
-                            setStep('idle');
-                            setOtpSent(false);
-                            setOtpCode('');
-                            setOtpError(false);
-                            setAuthLogs([]);
-                            setClaimsLogs([]);
-                            setRlsLogs([]);
-                            setBroadcastLogs([]);
-                            setPhoneScreenOn(false);
-                            setNotificationReceived(false);
-                        }}
-                        className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px] text-black"
-                    >
-                        Restart Sandbox Simulator
-                    </button>
-                </div>
-            )}
-        </div>
-    );
-};
-
-const HirenixSimulator: React.FC = () => {
-    const [selectedRole, setSelectedRole] = useState<'aiml' | 'frontend'>('aiml');
-    const [selectedResume, setSelectedResume] = useState<'anirudh' | 'generic' | 'marketing'>('anirudh');
-    const [scanState, setScanState] = useState<'idle' | 'scanning' | 'done'>('idle');
-    const [progress, setProgress] = useState(0);
-    const [statusText, setStatusText] = useState('');
-
-    const roles = {
-        aiml: {
-            title: "AI/ML Engineer",
-            keywords: ["Python", "PyTorch", "TensorFlow", "NLP", "CNN", "Deep Learning", "Transformers"]
-        },
-        frontend: {
-            title: "Frontend Developer",
-            keywords: ["React", "TypeScript", "Tailwind CSS", "Next.js", "Vite", "Framer Motion", "HTML/CSS"]
-        }
-    };
-
-    const resumes = {
-        anirudh: {
-            name: "Anirudh S. Resume (AI & ML Focus)",
-            metrics: {
-                aiml: {
-                    sectionCompleteness: 100,
-                    keywordDensity: 95,
-                    measurableAchievements: 90,
-                    formatting: 100,
-                    semanticSimilarity: 92,
-                    matchedKeywords: ["Python", "PyTorch", "TensorFlow", "NLP", "CNN", "Deep Learning"],
-                    missingKeywords: ["Transformers"]
-                },
-                frontend: {
-                    sectionCompleteness: 100,
-                    keywordDensity: 80,
-                    measurableAchievements: 85,
-                    formatting: 100,
-                    semanticSimilarity: 78,
-                    matchedKeywords: ["React", "TypeScript", "Tailwind CSS", "Next.js", "HTML/CSS"],
-                    missingKeywords: ["Vite", "Framer Motion"]
-                }
-            }
-        },
-        generic: {
-            name: "Generic IT Resume",
-            metrics: {
-                aiml: {
-                    sectionCompleteness: 90,
-                    keywordDensity: 40,
-                    measurableAchievements: 50,
-                    formatting: 85,
-                    semanticSimilarity: 48,
-                    matchedKeywords: ["Python"],
-                    missingKeywords: ["PyTorch", "TensorFlow", "NLP", "CNN", "Deep Learning", "Transformers"]
-                },
-                frontend: {
-                    sectionCompleteness: 90,
-                    keywordDensity: 60,
-                    measurableAchievements: 50,
-                    formatting: 85,
-                    semanticSimilarity: 58,
-                    matchedKeywords: ["React", "HTML/CSS"],
-                    missingKeywords: ["TypeScript", "Tailwind CSS", "Next.js", "Vite", "Framer Motion"]
-                }
-            }
-        },
-        marketing: {
-            name: "Creative Marketing Resume",
-            metrics: {
-                aiml: {
-                    sectionCompleteness: 70,
-                    keywordDensity: 10,
-                    measurableAchievements: 40,
-                    formatting: 90,
-                    semanticSimilarity: 18,
-                    matchedKeywords: [],
-                    missingKeywords: ["Python", "PyTorch", "TensorFlow", "NLP", "CNN", "Deep Learning", "Transformers"]
-                },
-                frontend: {
-                    sectionCompleteness: 70,
-                    keywordDensity: 15,
-                    measurableAchievements: 40,
-                    formatting: 90,
-                    semanticSimilarity: 22,
-                    matchedKeywords: ["HTML/CSS"],
-                    missingKeywords: ["React", "TypeScript", "Tailwind CSS", "Next.js", "Vite", "Framer Motion"]
-                }
-            }
-        }
-    };
-
-    const currentMetrics = resumes[selectedResume].metrics[selectedRole];
-
-    const ruleBasedScore = Math.round(
-        (currentMetrics.sectionCompleteness * 0.3) +
-        (currentMetrics.keywordDensity * 0.4) +
-        (currentMetrics.measurableAchievements * 0.3)
-    );
-    const semanticScore = currentMetrics.semanticSimilarity;
-    const finalScore = Math.round((ruleBasedScore * 0.7) + (semanticScore * 0.3));
-
-    const getMatchRating = (score: number) => {
-        if (score >= 85) return { text: "STRONG MATCH", color: "text-retro-green bg-green-950/40 border-retro-green" };
-        if (score >= 60) return { text: "POTENTIAL MATCH", color: "text-retro-yellow bg-yellow-950/40 border-retro-yellow" };
-        return { text: "LOW ALIGNMENT", color: "text-retro-orange bg-orange-950/40 border-retro-orange" };
-    };
-
-    const runAtsScan = () => {
-        setScanState('scanning');
-        setProgress(0);
-    };
-
-    useEffect(() => {
-        if (scanState !== 'scanning') return;
-
-        const steps = [
-            { limit: 20, text: "Initializing all-MiniLM-L6-v2 embedding model..." },
-            { limit: 40, text: "Parsing resume structure and checking section completeness..." },
-            { limit: 60, text: "Running keyword density scanner and achievement extractor..." },
-            { limit: 80, text: "Computing cosine similarity index against baseline embeddings..." },
-            { limit: 100, text: "Aggregating hybrid scores and generating report card..." }
-        ];
-
-        const interval = setInterval(() => {
-            setProgress(prev => {
-                const nextVal = prev + 5;
-                const currentStep = steps.find(s => nextVal <= s.limit) || steps[steps.length - 1];
-                setStatusText(currentStep.text);
-
-                if (nextVal >= 100) {
-                    clearInterval(interval);
-                    setScanState('done');
-                    return 100;
-                }
-                return nextVal;
-            });
-        }, 100);
-
-        return () => clearInterval(interval);
-    }, [scanState]);
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider">
-                System: Hirenix ATS Analyzer Client v1.2.0
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-[10px] uppercase text-zinc-500 mb-1">Target Job Role</label>
-                    <div className="flex flex-col gap-1">
-                        {(Object.keys(roles) as Array<keyof typeof roles>).map(r => (
-                            <button
-                                key={r}
-                                onClick={() => { setSelectedRole(r); setScanState('idle'); }}
-                                disabled={scanState === 'scanning'}
-                                className={`px-2 py-1.5 border-2 text-[10px] text-left uppercase transition-all ${selectedRole === r ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white border-zinc-200 text-zinc-600'}`}
-                            >
-                                {roles[r].title}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-[10px] uppercase text-zinc-500 mb-1">Upload/Select Resume</label>
-                    <div className="flex flex-col gap-1">
-                        {(Object.keys(resumes) as Array<keyof typeof resumes>).map(res => (
-                            <button
-                                key={res}
-                                onClick={() => { setSelectedResume(res); setScanState('idle'); }}
-                                disabled={scanState === 'scanning'}
-                                className={`px-2 py-1 border-2 text-[9px] text-left uppercase truncate transition-all ${selectedResume === res ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white border-zinc-200 text-zinc-600'}`}
-                            >
-                                {resumes[res].name.split(' ')[0] + ' ' + (resumes[res].name.includes('AI') ? 'S. (AI/ML)' : resumes[res].name.includes('IT') ? 'IT Template' : 'Marketing')}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            </div>
-
-            <div className="border-4 border-black bg-white aspect-video relative flex flex-col justify-center overflow-hidden p-4">
-                <div className="absolute inset-0 bg-zinc-800 pointer-events-none opacity-[0.05]"></div>
-                
-                {scanState === 'idle' && (
-                    <div className="text-center space-y-2">
-                        <span className="material-symbols-outlined text-zinc-400 text-6xl">psychology</span>
-                        <div className="text-xs uppercase text-zinc-600">Ready to score candidate alignment</div>
-                        <div className="text-[9px] text-zinc-400 uppercase">
-                            Weights: 70% rule-based | 30% semantic (cos-sim)
-                        </div>
-                    </div>
-                )}
-
-                {scanState === 'scanning' && (
-                    <div className="flex flex-col items-center justify-center space-y-3 text-center px-4">
-                        <div className="text-xs uppercase font-bold text-retro-orange animate-pulse">Scanning resume...</div>
-                        <div className="text-[9px] text-zinc-400 uppercase h-8 max-w-xs">{statusText}</div>
-                        <div className="w-full max-w-xs bg-zinc-200 h-4 border-2 border-black overflow-hidden relative">
-                            <div className="bg-retro-orange h-full transition-all duration-100" style={{ width: `${progress}%` }} />
-                        </div>
-                        <div className="text-[10px] text-zinc-600">{progress}% COMPLETE</div>
-                    </div>
-                )}
-
-                {scanState === 'done' && (
-                    <div className="h-full flex flex-col justify-between overflow-y-auto text-xs font-body">
-                        <div>
-                            <div className="flex justify-between items-center border-b border-zinc-200 pb-1.5 mb-2">
-                                <span className="font-pixel text-[10px] text-retro-orange uppercase">Analysis Complete</span>
-                                <span className={`font-pixel text-[10px] uppercase border px-2 py-0.5 font-bold ${getMatchRating(finalScore).color}`}>
-                                    {getMatchRating(finalScore).text}
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <div className="text-[10px] font-bold text-zinc-800">CANDIDATE SUITABILITY REPORT</div>
-                                    <div className="text-[11px] text-zinc-600">
-                                        <div className="flex justify-between">
-                                            <span>Target:</span> <span className="font-bold text-retro-charcoal">{roles[selectedRole].title}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span>Resume:</span> <span className="font-bold text-retro-charcoal truncate max-w-[120px]">{resumes[selectedResume].name.split(' (')[0]}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="border border-black p-2 bg-retro-cream text-center flex flex-col justify-center items-center">
-                                    <div className="text-[9px] uppercase text-zinc-500 font-pixel">Overall Score</div>
-                                    <div className="text-2xl font-display leading-none text-retro-charcoal">{finalScore}%</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] font-pixel bg-zinc-50 border border-zinc-200 p-2">
-                                <div>
-                                    <div className="text-zinc-500 border-b border-zinc-200 pb-0.5 mb-1">RULE-BASED (70%)</div>
-                                    <div>Completeness: {currentMetrics.sectionCompleteness}%</div>
-                                    <div>Density: {currentMetrics.keywordDensity}%</div>
-                                    <div>Achievements: {currentMetrics.measurableAchievements}%</div>
-                                </div>
-                                <div>
-                                    <div className="text-zinc-500 border-b border-zinc-200 pb-0.5 mb-1">SEMANTIC (30%)</div>
-                                    <div>Cos-Sim Rank: {currentMetrics.semanticSimilarity}%</div>
-                                    <div className="text-[8px] text-zinc-400 mt-1 uppercase">all-MiniLM-L6-v2 Model</div>
-                                </div>
-                            </div>
-
-                            <div className="mt-2 text-[10px]">
-                                <span className="font-bold uppercase text-zinc-500 block mb-0.5">Matched Keywords:</span>
-                                <div className="flex flex-wrap gap-1">
-                                    {currentMetrics.matchedKeywords.length > 0 ? (
-                                        currentMetrics.matchedKeywords.map(k => (
-                                            <span key={k} className="px-1.5 py-0.5 bg-green-50 text-green-700 border border-green-200 text-[9px] font-pixel">{k}</span>
-                                        ))
-                                    ) : (
-                                        <span className="text-zinc-400 text-[9px] font-pixel italic">No matched keywords</span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {scanState === 'idle' && (
-                <button 
-                    onClick={runAtsScan}
-                    className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Evaluate Match Score
-                </button>
-            )}
-            {scanState === 'done' && (
-                <button 
-                    onClick={() => setScanState('idle')}
-                    className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                >
-                    Reset Evaluator
-                </button>
-            )}
-        </div>
-    );
-};
-
-const NimmaGuruSimulator: React.FC = () => {
-    const [language, setLanguage] = useState<'en' | 'kn'>('en');
-    const [tab, setTab] = useState<'directory' | 'gemini' | 'kudos' | 'bookings'>('directory');
-    const [selectedMentor, setSelectedMentor] = useState<any | null>(null);
-    const [searchQuery, setSearchQuery] = useState('');
-    const [bookings, setBookings] = useState<any[]>([
-        { id: 1, mentorName: 'Ramesh Kumar', mentorNameKn: 'ರಮೇಶ್ ಕುಮಾರ್', date: '2026-07-05', time: '10:00 AM', status: 'Confirmed' }
-    ]);
-    const [newKudos, setNewKudos] = useState({ name: '', mentor: 'Ramesh Kumar', message: '' });
-    const [kudosList, setKudosList] = useState<any[]>([
-        { id: 1, sender: 'Anand S.', senderKn: 'ಆನಂದ್ ಎಸ್.', mentor: 'Ramesh Kumar', mentorKn: 'ರಮೇಶ್ ಕುಮಾರ್', text: 'Helped resolve my soil acidity issue in one visit!', textKn: 'ಕೇವಲ ಒಂದು ಭೇಟಿಯಲ್ಲಿ ನನ್ನ ಮಣ್ಣಿನ ಆಮ್ಲೀಯತೆಯ ಸಮಸ್ಯೆಯನ್ನು ಬಗೆಹರಿಸಲು ಸಹಾಯ ಮಾಡಿದರು!' },
-        { id: 2, sender: 'Meera K.', senderKn: 'ಮೀರಾ ಕೆ.', mentor: 'Gowri Amma', mentorKn: 'ಗೌರಿ ಅಮ್ಮ', text: 'Patient teacher. My kids loved learning pottery basics.', textKn: 'ಅತ್ಯಂತ ತಾಳ್ಮೆಯ ಶಿಕ್ಷಕಿ. ನನ್ನ ಮಕ್ಕಳಿಗೆ ಮಡಕೆ ತಯಾರಿಕೆಯ ಮೂಲಭೂತ ಅಂಶಗಳನ್ನು ಕಲಿಯಲು ತುಂಬಾ ಖುಷಿಯಾಯಿತು.' }
-    ]);
-
-    const [geminiQuery, setGeminiQuery] = useState('');
-    const [geminiLogs, setGeminiLogs] = useState<string[]>([]);
-    const [geminiResult, setGeminiResult] = useState<any | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-
-    const mentors = [
-        {
-            name: 'Ramesh Kumar',
-            nameKn: 'ರಮೇಶ್ ಕುಮಾರ್',
-            role: 'Agriculture Expert (Coconut & Arecanut)',
-            roleKn: 'ಕೃಷಿ ತಜ್ಞ (ತೆಂಗು ಮತ್ತು ಅಡಿಕೆ)',
-            ward: 'Ward 3',
-            wardKn: 'ವಾರ್ಡ್ 3',
-            rating: '4.9',
-            contact: '+91 94475 XXXXX',
-            bio: '30+ years of farming experience. Specializes in soil health, natural composting, and organic pest control.',
-            bioKn: '30+ ವರ್ಷಗಳ ಕೃಷಿ ಅನುಭವ. ಮಣ್ಣಿನ ಆರೋಗ್ಯ, ನೈಸರ್ಗಿಕ ಕಾಂಪೋಸ್ಟಿಂಗ್ ಮತ್ತು ಸಾವಯವ ಕೀಟ ನಿಯಂತ್ರಣದಲ್ಲಿ ಪರಿಣತಿ ಹೊಂದಿದ್ದಾರೆ.'
-        },
-        {
-            name: 'Gowri Amma',
-            nameKn: 'ಗೌರಿ ಅಮ್ಮ',
-            role: 'Traditional Pottery Art',
-            roleKn: 'ಸಾಂಪ್ರದಾಯಿಕ ಮಣ್ಣಿನ ಮಡಕೆ ಕಲೆ',
-            ward: 'Ward 5',
-            wardKn: 'ವಾರ್ಡ್ 5',
-            rating: '4.8',
-            contact: '+91 98451 XXXXX',
-            bio: 'Master artisan creating terracotta cookware and traditional clay artifacts for local festivals.',
-            bioKn: 'ಸ್ಥಳೀಯ ಹಬ್ಬಗಳಿಗೆ ಟೆರಾಕೋಟಾ ಅಡುಗೆ ಪಾತ್ರೆಗಳು ಮತ್ತು ಸಾಂಪ್ರದಾಯಿಕ ಜೇಡಿಮಣ್ಣಿನ ಕಲಾಕೃತಿಗಳನ್ನು ರಚಿಸುವ ಪ್ರಮುಖ ಕುಶಲಕರ್ಮಿ.'
-        },
-        {
-            name: 'Shankarappa Gowda',
-            nameKn: 'ಶಂಕರಪ್ಪ ಗೌಡ',
-            role: 'Master Wood Carver',
-            roleKn: 'ಮರ ಕೆತ್ತನೆ ತಜ್ಞ',
-            ward: 'Ward 2',
-            wardKn: 'ವಾರ್ಡ್ 2',
-            rating: '4.9',
-            contact: '+91 95391 XXXXX',
-            bio: 'Preserving the heritage of wooden temple carvings and traditional furniture design.',
-            bioKn: 'ಮರದ ದೇವಸ್ಥಾನದ ಕೆತ್ತನೆಗಳು ಮತ್ತು ಸಾಂಪ್ರದಾಯಿಕ ಪೀಠೋಪಕರಣಗಳ ವಿನ್ಯಾಸದ ಪರಂಪರೆಯನ್ನು ಸಂರಕ್ಷಿಸುತ್ತಿದ್ದಾರೆ.'
-        },
-        {
-            name: 'Dr. Leela Raju',
-            nameKn: 'ಡಾ. ಲೀಲಾ ರಾಜು',
-            role: 'Ayurveda & Herbal Practitioner',
-            roleKn: 'ಆಯುರ್ವೇದ ಮತ್ತು ಗಿಡಮೂಲಿಕೆ ವೈದ್ಯರು',
-            ward: 'Ward 4',
-            wardKn: 'ವಾರ್ಡ್ 4',
-            rating: '4.7',
-            contact: '+91 96521 XXXXX',
-            bio: 'Expertise in native medicinal plants and traditional wellness remedies for seasonal ailments.',
-            bioKn: 'ಸ್ಥಳೀಯ ಔಷಧೀಯ ಸಸ್ಯಗಳು ಮತ್ತು ಕಾಲೋಚಿತ ಕಾಯಿಲೆಗಳಿಗೆ ಸಾಂಪ್ರದಾಯಿಕ ಕ್ಷೇಮ ಪರಿಹಾರಗಳಲ್ಲಿ ಪರಿಣತಿ.'
-        }
-    ];
-
-    const handleGeminiAsk = () => {
-        if (!geminiQuery) return;
-        setIsProcessing(true);
-        setGeminiLogs([]);
-        setGeminiResult(null);
-
-        const logs = [
-            language === 'kn' 
-                ? "[Gemini 2.0] ಧ್ವನಿ/ಪಠ್ಯ ಇನ್‌ಪುಟ್ ಸ್ವೀಕರಿಸಲಾಗಿದೆ..." 
-                : "[Gemini 2.0] Voice/Text Query received...",
-            language === 'kn'
-                ? "[Gemini 2.0] ಮೃದುವಾದ ಪ್ರಾಂಪ್ಟ್ ಟೆಂಪ್ಲೇಟ್ ಅನ್ನು ಲೋಡ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
-                : "[Gemini 2.0] Loading soft prompt template for rural expert mapping...",
-            language === 'kn'
-                ? "[Gemini 2.0] ತಜ್ಞರ ವೆಕ್ಟರ್ ಪ್ರೊಫೈಲ್ ಡೇಟಾಬೇಸ್ ಅನ್ನು ಸ್ಕ್ಯಾನ್ ಮಾಡಲಾಗುತ್ತಿದೆ..."
-                : "[Gemini 2.0] Scanning expert vector profiles database...",
-            language === 'kn'
-                ? "[Gemini 2.0] ಮ್ಯಾಪಿಂಗ್ ಪೂರ್ಣಗೊಂಡಿದೆ. ನಿಕಟ ಹೊಂದಾಣಿಕೆಯನ್ನು ಆಯ್ಕೆಮಾಡಲಾಗಿದೆ."
-                : "[Gemini 2.0] Matching index computed. Nearest neighbor selected."
-        ];
-
-        let idx = 0;
-        const interval = setInterval(() => {
-            if (idx < logs.length) {
-                setGeminiLogs(prev => [...prev, logs[idx]]);
-                idx++;
-            } else {
-                clearInterval(interval);
-                setIsProcessing(false);
-
-                const queryLower = geminiQuery.toLowerCase();
-                let matched = mentors[0];
-                if (queryLower.includes('pottery') || queryLower.includes('clay') || queryLower.includes('ಮಡಕೆ') || queryLower.includes('ಜೇಡಿಮಣ್ಣು')) {
-                    matched = mentors[1];
-                } else if (queryLower.includes('wood') || queryLower.includes('carving') || queryLower.includes('ಮರ') || queryLower.includes('ಕೆತ್ತನೆ')) {
-                    matched = mentors[2];
-                } else if (queryLower.includes('ayurveda') || queryLower.includes('medicine') || queryLower.includes('ಆಯುರ್ವೇದ') || queryLower.includes('ಔಷಧ') || queryLower.includes('herbal')) {
-                    matched = mentors[3];
-                }
-                setGeminiResult(matched);
-            }
-        }, 400);
-    };
-
-    const handleBookSession = (mentor: any) => {
-        const newBooking = {
-            id: Date.now(),
-            mentorName: mentor.name,
-            mentorNameKn: mentor.nameKn,
-            date: new Date(Date.now() + 86400000 * 2).toISOString().split('T')[0],
-            time: '11:00 AM',
-            status: 'Pending Sync'
-        };
-
-        setBookings(prev => [...prev, newBooking]);
-        
-        setTimeout(() => {
-            setBookings(curr => curr.map(b => b.id === newBooking.id ? { ...b, status: 'Confirmed' } : b));
-        }, 1500);
-    };
-
-    const handleAddKudos = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!newKudos.name || !newKudos.message) return;
-
-        const entry = {
-            id: Date.now(),
-            sender: newKudos.name,
-            senderKn: newKudos.name,
-            mentor: newKudos.mentor,
-            mentorKn: mentors.find(m => m.name === newKudos.mentor)?.nameKn || newKudos.mentor,
-            text: newKudos.message,
-            textKn: newKudos.message
-        };
-
-        setKudosList(prev => [entry, ...prev]);
-        setNewKudos({ name: '', mentor: 'Ramesh Kumar', message: '' });
-    };
-
-    const t = {
-        en: {
-            title: "Nimma-Guru",
-            subtitle: "Village Expert Directory",
-            searchPlaceholder: "Search expertise (e.g. soil, clay)...",
-            tabGurus: "Gurus",
-            tabGemini: "Gemini AI",
-            tabKudos: "Kudos Wall",
-            tabBookings: "Bookings",
-            ward: "Ward",
-            rating: "Rating",
-            contact: "Call/SMS",
-            bookBtn: "Schedule Session",
-            bookingConfirmed: "Synced with Firebase",
-            bookingPending: "Syncing...",
-            askGeminiTitle: "AI Mentor Recommendations",
-            askGeminiDesc: "Describe what skill or issue you want to learn/solve, and our Gemini model will find the perfect mentor.",
-            askGeminiBtn: "Ask Gemini Assistant",
-            askGeminiPlaceholder: "I want to learn soil conditioning or pottery...",
-            kudosTitle: "Thank You Wall",
-            kudosDesc: "Show appreciation to your local gurus for sharing their knowledge.",
-            kudosFormName: "Your Name",
-            kudosFormMentor: "Select Mentor",
-            kudosFormMsg: "Your message of thanks...",
-            kudosFormBtn: "Post Thank You Note"
-        },
-        kn: {
-            title: "ನಿಮ್ಮ ಗುರು",
-            subtitle: "ಗ್ರಾಮೀಣ ತಜ್ಞರ ಡೈರೆಕ್ಟರಿ",
-            searchPlaceholder: "ವಿಷಯ ಹುಡುಕಿ (ಉದಾ: ಮಣ್ಣು, ಕೃಷಿ)...",
-            tabGurus: "ಗುರುಗಳು",
-            tabGemini: "ಗೇಮಿನಿ ಸಹಾಯಕ",
-            tabKudos: "ಧನ್ಯವಾದ ಗೋಡೆ",
-            tabBookings: "ಬುಕಿಂಗ್ಗಳು",
-            ward: "ವಾರ್ಡ್",
-            rating: "ರೇಟಿಂಗ್",
-            contact: "ಕರೆ/ಸಂದೇಶ",
-            bookBtn: "ತರಗತಿ ನಿಗದಿಪಡಿಸಿ",
-            bookingConfirmed: "ಫೈರ್ಬೇಸ್ಗೆ ಸಿಂಕ್ ಆಗಿದೆ",
-            bookingPending: "ಸಿಂಕ್ ಆಗುತ್ತಿದೆ...",
-            askGeminiTitle: "AI ಶಿಫಾರಸು ಎಂಜಿನ್",
-            askGeminiDesc: "ನೀವು ಯಾವ ಕೌಶಲ್ಯವನ್ನು ಕಲಿಯಲು ಬಯಸುತ್ತೀರಿ ಎಂದು ಬರೆಯಿರಿ, ನಮ್ಮ ಗೇಮಿನಿ ಮಾದರಿಯು ಸೂಕ್ತ ಮಾರ್ಗದರ್ಶಕರನ್ನು ಹುಡುಕುತ್ತದೆ.",
-            askGeminiBtn: "ಗೇಮಿನಿಗೆ ಕೇಳಿ",
-            askGeminiPlaceholder: "ಉದಾಹರಣೆಗೆ: ಮಣ್ಣಿನ ಆರೋಗ್ಯ ಅಥವಾ ಮಡಕೆ ತಯಾರಿಕೆ...",
-            kudosTitle: "ಧನ್ಯವಾದ ಗೋಡೆ",
-            kudosDesc: "ಜ್ಞಾನವನ್ನು ಹಂಚಿಕೊಂಡಿದ್ದಕ್ಕಾಗಿ ನಿಮ್ಮ ಸ್ಥಳೀಯ ಗುರುಗಳಿಗೆ ಧನ್ಯವಾದ ತಿಳಿಸಿ.",
-            kudosFormName: "ನಿಮ್ಮ ಹೆಸರು",
-            kudosFormMentor: "ಗುರುವನ್ನು ಆರಿಸಿ",
-            kudosFormMsg: "ನಿಮ್ಮ ಧನ್ಯವಾದ ಸಂದೇಶ...",
-            kudosFormBtn: "ಧನ್ಯವಾದ ಪೋಸ್ಟ್ ಮಾಡಿ"
-        }
-    };
-
-    const activeT = t[language];
-
-    const filteredMentors = mentors.filter(m => {
-        const term = searchQuery.toLowerCase();
-        return (
-            m.name.toLowerCase().includes(term) ||
-            m.nameKn.includes(term) ||
-            m.role.toLowerCase().includes(term) ||
-            m.roleKn.includes(term) ||
-            m.bio.toLowerCase().includes(term) ||
-            m.bioKn.includes(term)
-        );
-    });
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            {/* Bilingual Header Toggle */}
-            <div className="bg-orange-600 text-white p-2.5 text-[10px] uppercase tracking-wider font-pixel flex justify-between items-center border-b-2 border-black rounded shadow-[0_4px_12px_rgba(234,88,12,0.15)]">
-                <div className="flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-xs animate-pulse text-yellow-300">spa</span>
-                    <span>{language === 'kn' ? "ನಿಮ್ಮ ಗುರು: ಗ್ರಾಮೀಣ ಸಂಪರ್ಕ" : "NIMMA-GURU: VILLAGE CONNECT"}</span>
-                </div>
-                <div className="flex border border-white/40 rounded overflow-hidden">
-                    <button
-                        onClick={() => setLanguage('en')}
-                        className={`px-2 py-0.5 text-[8px] font-bold ${language === 'en' ? 'bg-yellow-400 text-black' : 'bg-transparent text-white'}`}
-                    >
-                        EN
-                    </button>
-                    <button
-                        onClick={() => setLanguage('kn')}
-                        className={`px-2 py-0.5 text-[8px] font-bold ${language === 'kn' ? 'bg-yellow-400 text-black' : 'bg-transparent text-white'}`}
-                    >
-                        ಕನ್ನಡ
-                    </button>
-                </div>
-            </div>
-
-            {/* Simulated Android Device Wrapper */}
-            <div className="border-4 border-amber-800 bg-amber-50 rounded-xl overflow-hidden p-2 shadow-[inset_0px_0px_10px_rgba(139,92,26,0.2)]">
-                {/* Status Bar */}
-                <div className="flex justify-between items-center px-2 py-0.5 text-[8px] text-amber-900/60 uppercase border-b border-amber-900/10 mb-2">
-                    <span>9:41 AM</span>
-                    <span className="flex items-center gap-1">
-                        <span>bilingual 📶</span>
-                        <span>100% 🔋</span>
-                    </span>
-                </div>
-
-                {/* Sub-navigation tabs */}
-                <div className="grid grid-cols-4 gap-1 text-[8px] mb-3">
-                    {(['directory', 'gemini', 'kudos', 'bookings'] as const).map(tabKey => {
-                        const active = tab === tabKey;
-                        let label = "";
-                        if (tabKey === 'directory') label = activeT.tabGurus;
-                        if (tabKey === 'gemini') label = activeT.tabGemini;
-                        if (tabKey === 'kudos') label = activeT.tabKudos;
-                        if (tabKey === 'bookings') label = activeT.tabBookings;
-
-                        return (
-                            <button
-                                key={tabKey}
-                                onClick={() => { setTab(tabKey); setSelectedMentor(null); }}
-                                className={`py-1.5 border border-black rounded uppercase text-center font-bold transition-all ${active ? 'bg-orange-500 text-white shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]' : 'bg-white text-zinc-600'}`}
-                            >
-                                {label}
-                            </button>
-                        );
-                    })}
-                </div>
-
-                {/* Directory Tab */}
-                {tab === 'directory' && !selectedMentor && (
-                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                        {/* Search Input */}
-                        <div className="relative">
-                            <input
-                                type="text"
-                                placeholder={activeT.searchPlaceholder}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full text-[9px] font-pixel border border-black rounded p-1.5 bg-white text-black outline-none placeholder:text-zinc-400"
-                            />
-                        </div>
-
-                        {/* List */}
-                        {filteredMentors.map((m, idx) => (
-                            <div
-                                key={idx}
-                                onClick={() => setSelectedMentor(m)}
-                                className="bg-white border-2 border-black rounded p-2.5 flex justify-between items-start cursor-pointer hover:bg-orange-50/50 hover:border-orange-500 transition-colors"
-                            >
-                                <div className="space-y-1 text-left min-w-0">
-                                    <div className="text-[10px] font-bold text-zinc-800 uppercase flex items-center gap-1.5">
-                                        <span className="material-symbols-outlined text-[10px] text-orange-600">account_circle</span>
-                                        {language === 'kn' ? m.nameKn : m.name}
-                                    </div>
-                                    <div className="text-[8px] text-zinc-500 leading-tight uppercase truncate">
-                                        {language === 'kn' ? m.roleKn : m.role}
-                                    </div>
-                                    <div className="text-[7px] font-pixel bg-green-100 text-green-800 border border-green-200 inline-block px-1 rounded uppercase">
-                                        {language === 'kn' ? m.wardKn : m.ward}
-                                    </div>
-                                </div>
-                                <div className="text-right shrink-0">
-                                    <div className="text-[9px] text-yellow-600 font-bold flex items-center justify-end gap-0.5">
-                                        ★ {m.rating}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-
-                {/* Directory Details Screen */}
-                {tab === 'directory' && selectedMentor && (
-                    <div className="bg-white border-2 border-black rounded p-3 text-left space-y-3">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h4 className="text-xs font-bold text-zinc-800 uppercase flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-xs text-orange-600">account_circle</span>
-                                    {language === 'kn' ? selectedMentor.nameKn : selectedMentor.name}
-                                </h4>
-                                <p className="text-[8px] text-zinc-500 uppercase mt-0.5">
-                                    {language === 'kn' ? selectedMentor.roleKn : selectedMentor.role}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => setSelectedMentor(null)}
-                                className="px-1.5 py-0.5 border border-black rounded text-[8px] uppercase bg-zinc-100 font-pixel"
-                            >
-                                {language === 'kn' ? "ಹಿಂದಕ್ಕೆ" : "Back"}
-                            </button>
-                        </div>
-
-                        <div className="h-0.5 border-t border-dashed border-black/10" />
-
-                        <div className="space-y-1.5">
-                            <div className="text-[8px] text-zinc-400 uppercase">Bio / ಪರಿಚಯ</div>
-                            <p className="text-[9px] text-zinc-700 leading-normal font-body uppercase font-bold">
-                                {language === 'kn' ? selectedMentor.bioKn : selectedMentor.bio}
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 text-[8px]">
-                            <div className="bg-zinc-50 border border-black/10 p-1.5 rounded">
-                                <div className="text-zinc-400 uppercase text-[7px]">{activeT.ward}</div>
-                                <div className="font-bold text-zinc-700 uppercase">{language === 'kn' ? selectedMentor.wardKn : selectedMentor.ward}</div>
-                            </div>
-                            <div className="bg-zinc-50 border border-black/10 p-1.5 rounded">
-                                <div className="text-zinc-400 uppercase text-[7px]">{activeT.rating}</div>
-                                <div className="font-bold text-yellow-600 uppercase">★ {selectedMentor.rating}</div>
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2 pt-2">
-                            <button
-                                onClick={() => handleBookSession(selectedMentor)}
-                                className="flex-1 py-1.5 bg-orange-500 text-white border border-black rounded text-[8px] uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none"
-                            >
-                                {activeT.bookBtn}
-                            </button>
-                            <a
-                                href={`tel:${selectedMentor.contact}`}
-                                className="px-3 py-1.5 bg-green-600 text-white border border-black rounded text-[8px] uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)] active:translate-x-[1px] active:translate-y-[1px] active:shadow-none flex items-center gap-1 justify-center"
-                            >
-                                <span className="material-symbols-outlined text-[10px]">call</span>
-                                {activeT.contact}
-                            </a>
-                        </div>
-                    </div>
-                )}
-
-                {/* Gemini AI tab */}
-                {tab === 'gemini' && (
-                    <div className="space-y-3">
-                        <div className="bg-white border-2 border-black rounded p-3 text-left space-y-2">
-                            <h4 className="text-[10px] font-bold text-zinc-800 uppercase flex items-center gap-1.5">
-                                <span className="material-symbols-outlined text-xs text-sky-500 animate-pulse">model_training</span>
-                                {activeT.askGeminiTitle}
-                            </h4>
-                            <p className="text-[8px] text-zinc-500 leading-normal uppercase">
-                                {activeT.askGeminiDesc}
-                            </p>
-
-                            <div className="flex gap-1.5 mt-2">
-                                <input
-                                    type="text"
-                                    placeholder={activeT.askGeminiPlaceholder}
-                                    value={geminiQuery}
-                                    onChange={(e) => setGeminiQuery(e.target.value)}
-                                    disabled={isProcessing}
-                                    className="flex-grow text-[9px] font-pixel border border-black rounded p-1.5 bg-white text-black outline-none placeholder:text-zinc-400"
-                                />
-                                <button
-                                    onClick={handleGeminiAsk}
-                                    disabled={isProcessing}
-                                    className="px-2.5 bg-sky-500 text-white border border-black rounded text-[8px] uppercase font-bold disabled:opacity-50"
-                                >
-                                    {activeT.askGeminiBtn.split(' ')[0]}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Processing terminal logs */}
-                        {(geminiLogs.length > 0 || isProcessing) && (
-                            <div className="h-24 border-2 border-black bg-zinc-900 text-green-400 p-2 text-[8px] uppercase leading-tight overflow-y-auto space-y-0.5 font-pixel rounded text-left shadow-[inset_0px_0px_6px_rgba(0,255,0,0.25)]">
-                                {geminiLogs.map((log, index) => <div key={index}>&gt; {log}</div>)}
-                                {isProcessing && <div className="animate-pulse">&gt; Processing prompt tokens...</div>}
-                            </div>
-                        )}
-
-                        {/* Gemini result matched mentor */}
-                        {geminiResult && (
-                            <div className="bg-green-50 border-2 border-green-600 rounded p-2.5 text-left flex justify-between items-center animate-fade-in">
-                                <div className="space-y-1 min-w-0">
-                                    <div className="text-[7px] text-green-700 font-pixel uppercase font-bold">Recommended Mentor matched</div>
-                                    <div className="text-[9px] font-bold text-zinc-800 uppercase">
-                                        {language === 'kn' ? geminiResult.nameKn : geminiResult.name}
-                                    </div>
-                                    <div className="text-[7px] text-zinc-500 uppercase truncate">
-                                        {language === 'kn' ? geminiResult.roleKn : geminiResult.role}
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={() => { setSelectedMentor(geminiResult); setTab('directory'); }}
-                                    className="px-2 py-1 bg-green-600 text-white border border-black rounded text-[8px] uppercase font-bold"
-                                >
-                                    {language === 'kn' ? "ವಿವರ ನೋಡಿ" : "View"}
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* Kudos Wall tab */}
-                {tab === 'kudos' && (
-                    <div className="space-y-3">
-                        {/* Kudos post form */}
-                        <form onSubmit={handleAddKudos} className="bg-white border-2 border-black rounded p-3 text-left space-y-2">
-                            <h4 className="text-[9px] font-bold text-zinc-800 uppercase">{activeT.kudosTitle}</h4>
-                            <p className="text-[7px] text-zinc-400 uppercase leading-snug">{activeT.kudosDesc}</p>
-                            
-                            <div className="grid grid-cols-2 gap-2">
-                                <div className="space-y-0.5">
-                                    <label className="text-[7px] text-zinc-400 uppercase">{activeT.kudosFormName}</label>
-                                    <input
-                                        type="text"
-                                        placeholder="e.g. Anand"
-                                        value={newKudos.name}
-                                        onChange={(e) => setNewKudos({ ...newKudos, name: e.target.value })}
-                                        className="w-full text-[8px] font-pixel border border-black rounded p-1 bg-zinc-50 text-black outline-none"
-                                    />
-                                </div>
-                                <div className="space-y-0.5">
-                                    <label className="text-[7px] text-zinc-400 uppercase">{activeT.kudosFormMentor}</label>
-                                    <select
-                                        value={newKudos.mentor}
-                                        onChange={(e) => setNewKudos({ ...newKudos, mentor: e.target.value })}
-                                        className="w-full text-[8px] font-pixel border border-black rounded p-1 bg-zinc-50 text-black outline-none h-6 uppercase"
-                                    >
-                                        {mentors.map((m, idx) => (
-                                            <option key={idx} value={m.name}>{language === 'kn' ? m.nameKn : m.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="space-y-0.5">
-                                <label className="text-[7px] text-zinc-400 uppercase">{activeT.kudosFormMsg}</label>
-                                <input
-                                    type="text"
-                                    placeholder="Thank you for..."
-                                    value={newKudos.message}
-                                    onChange={(e) => setNewKudos({ ...newKudos, message: e.target.value })}
-                                    className="w-full text-[8px] font-pixel border border-black rounded p-1 bg-zinc-50 text-black outline-none"
-                                />
-                            </div>
-
-                            <button
-                                type="submit"
-                                className="w-full py-1.5 bg-orange-500 text-white border border-black rounded text-[8px] uppercase font-bold shadow-[2px_2px_0px_rgba(0,0,0,1)]"
-                            >
-                                {activeT.kudosFormBtn}
-                            </button>
-                        </form>
-
-                        {/* List of thank-you cards */}
-                        <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                            {kudosList.map((k, idx) => (
-                                <div key={idx} className="bg-yellow-50 border border-yellow-300 rounded p-2 text-left space-y-1 relative shadow-sm">
-                                    <div className="flex justify-between text-[7px] font-bold text-orange-800 uppercase">
-                                        <span>From: {language === 'kn' ? k.senderKn : k.sender}</span>
-                                        <span>To: {language === 'kn' ? k.mentorKn : k.mentor}</span>
-                                    </div>
-                                    <p className="text-[8px] text-zinc-700 leading-snug italic font-body font-bold">
-                                        "{language === 'kn' ? k.textKn : k.text}"
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {/* Scheduled Bookings Tab */}
-                {tab === 'bookings' && (
-                    <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                        {bookings.map((b, idx) => (
-                            <div key={idx} className="bg-white border border-black rounded p-2.5 text-left flex justify-between items-center shadow-sm">
-                                <div className="space-y-1 min-w-0">
-                                    <div className="text-[9px] font-bold text-zinc-800 uppercase">
-                                        {language === 'kn' ? b.mentorNameKn : b.mentorName}
-                                    </div>
-                                    <div className="text-[7px] text-zinc-500 uppercase">
-                                        {b.date} @ {b.time}
-                                    </div>
-                                </div>
-                                <div className="shrink-0 text-right">
-                                    <span className={`px-2 py-0.5 border text-[7px] rounded uppercase font-bold ${b.status === 'Confirmed' ? 'bg-green-100 text-green-800 border-green-300' : 'bg-yellow-100 text-yellow-800 border-yellow-300'}`}>
-                                        {b.status === 'Confirmed' ? activeT.bookingConfirmed : activeT.bookingPending}
-                                    </span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-};
-
-const AiCareerCoPilotSimulator: React.FC = () => {
-    const [step, setStep] = useState<'idle' | 'discovering' | 'tailoring' | 'tracking' | 'done'>('idle');
-    const [query, setQuery] = useState('AI Engineer');
-    const [logs, setLogs] = useState<string[]>([]);
-    const [atsScore, setAtsScore] = useState(0);
-    const [kanbanCol, setKanbanCol] = useState<'discovered' | 'tailored' | 'applied' | 'interviewing'>('discovered');
-    const logsContainerRef = useRef<HTMLDivElement>(null);
-
-    const presetQueries = ["AI Engineer", "Full Stack Developer", "Machine Learning Intern"];
-
-    useEffect(() => {
-        if (logsContainerRef.current) {
-            logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
-        }
-    }, [logs]);
-
-    const runPipeline = () => {
-        setStep('discovering');
-        setLogs([]);
-        setAtsScore(0);
-        setKanbanCol('discovered');
-    };
-
-    useEffect(() => {
-        if (step === 'idle') return;
-
-        let active = true;
-        const timeline = [
-            { time: 200, step: 'discovering', log: "🚀 Dispatching Job Discovery Multi-Agent System..." },
-            { time: 600, step: 'discovering', log: "🔍 WebScraperAgent scanning LinkedIn, Indeed, and Google Jobs..." },
-            { time: 1000, step: 'discovering', log: `📦 Found 3 matches matching criteria: '${query}'.` },
-            { time: 1400, step: 'discovering', log: "📋 Job details parsed: 'AI Engineer at NeuralCorp' (Salary: $120k, Kozhikode/Remote)." },
-            { time: 1800, step: 'discovering', log: "💾 Storing job description embeddings in ChromaDB vector space..." },
-            
-            { time: 2200, step: 'tailoring', log: "📝 Initializing ResumeTailorAgent..." },
-            { time: 2600, step: 'tailoring', log: "📊 Comparing resume keywords with job requirements..." },
-            { time: 3000, step: 'tailoring', log: "⚠️ Found gaps: missing 'Celery asynchronous task queue' and 'ChromaDB' experiences." },
-            { time: 3400, step: 'tailoring', log: "⚡ Tailoring resume bullet points using Gemini 2.0 Flash..." },
-            { time: 3800, step: 'tailoring', log: "✅ Generated tailored bullet: 'Integrated Celery & Redis to manage continuous background scraping pipeline.'" },
-            { time: 4200, step: 'tailoring', log: "📈 ATS Compatibility Score computed: 94.2%!" },
-            
-            { time: 4600, step: 'tracking', log: "🎯 ApplicationTrackerAgent active." },
-            { time: 5000, step: 'tracking', log: "📨 Simulating application submit to NeuralCorp applicant portal..." },
-            { time: 5400, step: 'tracking', log: "🔄 Updating Kanban pipeline stage from 'Tailored' to 'Applied'..." },
-            { time: 5800, step: 'tracking', log: "📅 Scheduling follow-up reminders in Redis task scheduler..." },
-            
-            { time: 6200, step: 'done', log: "🎉 CoPilot Pipeline completed successfully. 1 Application sent!" }
-        ];
-
-        let index = 0;
-        const startTime = Date.now();
-
-        const timer = setInterval(() => {
-            if (!active) return;
-            const elapsed = Date.now() - startTime;
-            while (index < timeline.length && timeline[index].time <= elapsed) {
-                const current = timeline[index];
-                setLogs(prev => [...prev, current.log]);
-                
-                if (current.step === 'tailoring') {
-                    setStep('tailoring');
-                    setKanbanCol('tailored');
-                    setAtsScore(78);
-                } else if (current.step === 'tracking') {
-                    setStep('tracking');
-                    setKanbanCol('applied');
-                    setAtsScore(94);
-                } else if (current.step === 'done') {
-                    setStep('done');
-                    setKanbanCol('interviewing');
-                }
-                index++;
-            }
-
-            if (index >= timeline.length) {
-                clearInterval(timer);
-            }
-        }, 100);
-
-        return () => {
-            active = false;
-            clearInterval(timer);
-        };
-    }, [step, query]);
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel flex justify-between">
-                <span>CoPilot Runner // CELERY_WORKER_01</span>
-                {step !== 'idle' && step !== 'done' && <span className="animate-pulse">Active Pipeline</span>}
-            </div>
-
-            {step === 'idle' && (
-                <div className="border-4 border-black bg-white aspect-video p-4 flex flex-col justify-between">
-                    <div className="space-y-2 mt-2">
-                        <div className="text-xs uppercase text-zinc-500 font-pixel">Select Target Job Title:</div>
-                        <div className="flex gap-2">
-                            {presetQueries.map(q => (
-                                <button
-                                    key={q}
-                                    onClick={() => setQuery(q)}
-                                    className={`px-2 py-1 border-2 text-[9px] uppercase transition-all ${query === q ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white text-zinc-600 border-zinc-200'}`}
-                                >
-                                    {q}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="text-[10px] text-zinc-600 font-body leading-relaxed pt-2">
-                            This simulator models the autonomous career assistant: scraping job postings, calculating resume-to-job similarity using cosine similarity embeddings, adapting resumes, and updating a local Kanban database.
-                        </div>
-                    </div>
-                    <button
-                        onClick={runPipeline}
-                        className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                    >
-                        Execute Agent Pipeline
-                    </button>
-                </div>
-            )}
-
-            {step !== 'idle' && (
-                <div className="space-y-3">
-                    <div className="grid grid-cols-4 gap-1 text-[9px] text-center">
-                        <div className={`border-2 p-1.5 uppercase ${kanbanCol === 'discovered' ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            Discovered
-                        </div>
-                        <div className={`border-2 p-1.5 uppercase ${kanbanCol === 'tailored' ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            Tailored ({atsScore}%)
-                        </div>
-                        <div className={`border-2 p-1.5 uppercase ${kanbanCol === 'applied' ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            Applied
-                        </div>
-                        <div className={`border-2 p-1.5 uppercase ${kanbanCol === 'interviewing' ? 'bg-retro-green border-black font-bold text-black' : 'bg-white border-zinc-200 text-zinc-400'}`}>
-                            Interview
-                        </div>
-                    </div>
-
-                    <div 
-                        ref={logsContainerRef}
-                        className="h-32 border-4 border-black bg-zinc-900 text-green-400 p-2 text-[9px] uppercase leading-tight overflow-y-auto space-y-1 font-pixel shadow-[inset_0px_0px_6px_rgba(0,255,0,0.3)]"
-                    >
-                        {logs.map((log, i) => {
-                            let color = "text-green-400";
-                            if (log.includes("🔍") || log.includes("🚀")) color = "text-yellow-400";
-                            if (log.includes("⚠️") || log.includes("gaps")) color = "text-retro-orange";
-                            if (log.includes("🎉") || log.includes("ATS")) color = "text-sky-400 font-bold";
-                            return <div key={i} className={color}>&gt; {log}</div>;
-                        })}
-                    </div>
-
-                    {step === 'done' ? (
-                        <button
-                            onClick={() => setStep('idle')}
-                            className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                        >
-                            Reset Pipeline
-                        </button>
-                    ) : (
-                        <div className="w-full bg-zinc-200 h-4 border-2 border-black overflow-hidden relative">
-                            <div className="bg-retro-orange h-full animate-pulse" style={{ width: step === 'discovering' ? '33%' : step === 'tailoring' ? '66%' : '90%' }} />
-                            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-pixel text-black font-bold">
-                                Pipeline State: {step.toUpperCase()}...
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-
-const SelfCorrectingAgentSimulator: React.FC = () => {
-    const [step, setStep] = useState<'idle' | 'running' | 'correcting' | 'verifying' | 'done'>('idle');
-    const [query, setQuery] = useState('NVIDIA NIM Release Date');
-    const [logs, setLogs] = useState<string[]>([]);
-    const [budget, setBudget] = useState(1.00);
-    const [engine, setEngine] = useState('Groq (Llama3)');
-    const logsContainerRef = useRef<HTMLDivElement>(null);
-
-    const presetQueries = [
-        "NVIDIA NIM Release Date",
-        "Self-Correcting LLM Architecture",
-        "Recent AI Regulation Specs"
-    ];
-
-    useEffect(() => {
-        if (logsContainerRef.current) {
-            logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight;
-        }
-    }, [logs]);
-
-    const runAgent = () => {
-        setStep('running');
-        setLogs([]);
-        setBudget(1.00);
-        setEngine('Groq (Llama3)');
-    };
-
-    useEffect(() => {
-        if (step === 'idle') return;
-
-        let active = true;
-        const timeline = [
-            { time: 200, step: 'running', budget: 0.98, engine: 'Groq (Llama3)', log: `[REACT LOOP] Init query: '${query}'` },
-            { time: 600, step: 'running', budget: 0.96, engine: 'Groq (Llama3)', log: `💭 THOUGHT: I need to search the web for recent announcements regarding ${query}.` },
-            { time: 1000, step: 'running', budget: 0.95, engine: 'Groq (Llama3)', log: `🔧 ACTION: WebSearchTool(query='${query}')` },
-            { time: 1400, step: 'running', budget: 0.95, engine: 'Groq (Llama3)', log: "📥 OBSERVATION: Call failed. Groq API 429 Too Many Requests (Rate limit hit)." },
-            { time: 1800, step: 'running', budget: 0.95, engine: 'Groq (Llama3)', log: "🔍 EVALUATION: Agent runner detected execution fault (API_FAILURE_429). Code: 429." },
-            
-            { time: 2200, step: 'correcting', budget: 0.85, engine: 'NVIDIA NIM (Gemini)', log: "⚡ TRIGGERING FALLBACK ROUTER: Budget: $0.95. Max retries left: 2." },
-            { time: 2600, step: 'correcting', budget: 0.82, engine: 'NVIDIA NIM (Gemini)', log: "🛠️ SELF-CORRECTION: Switching model engine to NIM Llama3-70B backup server." },
-            { time: 3000, step: 'correcting', budget: 0.80, engine: 'NVIDIA NIM (Gemini)', log: "💭 THOUGHT: Resubmitting request to search tool with backup API credentials..." },
-            { time: 3400, step: 'correcting', budget: 0.79, engine: 'NVIDIA NIM (Gemini)', log: `🔧 ACTION: WebSearchTool(query='${query}')` },
-            { time: 3800, step: 'correcting', budget: 0.79, engine: 'NVIDIA NIM (Gemini)', log: "📥 OBSERVATION: Success! Found article: 'NVIDIA NIM released on May 15, 2026, offering optimized inference microservices.'" },
-            
-            { time: 4200, step: 'verifying', budget: 0.70, engine: 'NVIDIA NIM (Gemini)', log: "💭 THOUGHT: I need to verify that the retrieved info matches the user query." },
-            { time: 4600, step: 'verifying', budget: 0.68, engine: 'NVIDIA NIM (Gemini)', log: "🔍 EVALUATION: Factuality validator compared output with context: No hallucination (Rating 9.8/10)." },
-            { time: 5000, step: 'verifying', budget: 0.68, engine: 'NVIDIA NIM (Gemini)', log: "✅ VERIFICATION SUCCESS: Query answered. Budget consumed: $0.32." },
-            
-            { time: 5400, step: 'done', budget: 0.68, engine: 'NVIDIA NIM (Gemini)', log: "🎉 ANSWER: NVIDIA NIM was released on May 15, 2026, providing scalable AI container workflows." }
-        ];
-
-        let index = 0;
-        const startTime = Date.now();
-
-        const timer = setInterval(() => {
-            if (!active) return;
-            const elapsed = Date.now() - startTime;
-            while (index < timeline.length && timeline[index].time <= elapsed) {
-                const current = timeline[index];
-                setLogs(prev => [...prev, current.log]);
-                setBudget(current.budget);
-                setEngine(current.engine);
-                
-                if (current.step === 'correcting') {
-                    setStep('correcting');
-                } else if (current.step === 'verifying') {
-                    setStep('verifying');
-                } else if (current.step === 'done') {
-                    setStep('done');
-                }
-                index++;
-            }
-
-            if (index >= timeline.length) {
-                clearInterval(timer);
-            }
-        }, 100);
-
-        return () => {
-            active = false;
-            clearInterval(timer);
-        };
-    }, [step, query]);
-
-    return (
-        <div className="space-y-4 text-retro-charcoal font-pixel">
-            <div className="bg-black text-green-500 p-2 text-[10px] uppercase tracking-wider font-pixel flex justify-between">
-                <span>Agent CLI // ReAct Loop</span>
-                <span>Active engine: {engine}</span>
-            </div>
-
-            {step === 'idle' && (
-                <div className="border-4 border-black bg-white aspect-video p-4 flex flex-col justify-between">
-                    <div className="space-y-2 mt-2">
-                        <div className="text-xs uppercase text-zinc-500 font-pixel">Choose Search Query:</div>
-                        <div className="flex flex-wrap gap-2">
-                            {presetQueries.map(q => (
-                                <button
-                                    key={q}
-                                    onClick={() => setQuery(q)}
-                                    className={`px-2 py-1 border-2 text-[9px] uppercase transition-all ${query === q ? 'bg-retro-yellow border-black text-black font-bold' : 'bg-white text-zinc-600 border-zinc-200'}`}
-                                >
-                                    {q}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="text-[10px] text-zinc-600 font-body leading-relaxed pt-2">
-                            This simulator models an autonomous ReAct loop built from scratch. When an API call rate-limit error is encountered on the Groq client, the agent automatically evaluates the execution path and falls back to a different LLM engine to resolve the task.
-                        </div>
-                    </div>
-                    <button
-                        onClick={runAgent}
-                        className="w-full py-2 bg-retro-orange border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                    >
-                        Launch ReAct Agent Loop
-                    </button>
-                </div>
-            )}
-
-            {step !== 'idle' && (
-                <div className="space-y-3">
-                    <div className="grid grid-cols-3 gap-2 text-[10px]">
-                        <div className="border-2 border-black p-2 bg-white text-center">
-                            <span className="text-[8px] text-zinc-400 block uppercase font-pixel">Current Engine</span>
-                            <span className="font-bold">{engine}</span>
-                        </div>
-                        <div className="border-2 border-black p-2 bg-white text-center">
-                            <span className="text-[8px] text-zinc-400 block uppercase font-pixel">Task Budget</span>
-                            <span className="font-bold">${budget.toFixed(2)}</span>
-                        </div>
-                        <div className={`border-2 border-black p-2 text-center uppercase font-bold ${step === 'correcting' ? 'bg-retro-orange text-white animate-pulse' : step === 'verifying' ? 'bg-retro-yellow text-black' : step === 'done' ? 'bg-retro-green text-black' : 'bg-white text-zinc-600'}`}>
-                            {step}
-                        </div>
-                    </div>
-
-                    <div 
-                        ref={logsContainerRef}
-                        className="h-32 border-4 border-black bg-zinc-900 text-green-400 p-2 text-[9px] uppercase leading-tight overflow-y-auto space-y-1 font-pixel shadow-[inset_0px_0px_6px_rgba(0,255,0,0.3)]"
-                    >
-                        {logs.map((log, i) => {
-                            let color = "text-green-400";
-                            if (log.includes("💭 THOUGHT")) color = "text-yellow-400";
-                            if (log.includes("🔧 ACTION")) color = "text-sky-400";
-                            if (log.includes("TRIGGERING") || log.includes("SELF-CORRECTION") || log.includes("Switching")) color = "text-retro-orange font-bold animate-pulse";
-                            if (log.includes("🎉") || log.includes("VERIFICATION SUCCESS")) color = "text-green-400 font-bold";
-                            return <div key={i} className={color}>&gt; {log}</div>;
-                        })}
-                    </div>
-
-                    {step === 'done' ? (
-                        <button
-                            onClick={() => setStep('idle')}
-                            className="w-full py-2 bg-retro-green border-2 border-black text-xs uppercase font-pixel shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] active:translate-x-[2px] active:translate-y-[2px]"
-                        >
-                            Reset Agent
-                        </button>
-                    ) : (
-                        <div className="w-full bg-zinc-200 h-4 border-2 border-black overflow-hidden relative">
-                            <div className="bg-retro-orange h-full animate-pulse" style={{ width: step === 'running' ? '30%' : step === 'correcting' ? '65%' : '85%' }} />
-                            <div className="absolute inset-0 flex items-center justify-center text-[9px] font-pixel text-black font-bold">
-                                Running Agent Loop...
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
+                {step === steps.length - 1 ? 'Reset Concurrency Trace' : 'Step Interleaving Clock →'}
+            </button>
         </div>
     );
 };
@@ -2480,16 +530,11 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     const [showSimulator, setShowSimulator] = useState(false);
 
     // Check if the current project title has a simulator
-    const hasSimulator = project ? [
-        "PashuSwasthya",
-        "CNN Visualizer",
-        "Hirenix",
-        "MessyData",
-        "Community Connect",
-        "Nimma-Guru",
-        "AI Career CoPilot",
-        "Self-Correcting Agent"
-    ].includes(project.title) : false;
+    const hasSimulator = project ? (
+        project.title.includes("OXYS") ||
+        project.title.includes("ICHNOS") ||
+        project.title.includes("DataRace")
+    ) : false;
 
     // Reset simulator tab when project changes
     useEffect(() => {
@@ -2497,25 +542,14 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     }, [project]);
 
     const renderSimulator = (title: string) => {
-        switch (title) {
-            case "PashuSwasthya":
-                return <CattleScannerSimulator />;
-            case "CNN Visualizer":
-                return <CnnVisualizerSimulator />;
-            case "Hirenix":
-                return <HirenixSimulator />;
-            case "MessyData":
-                return <MessyDataSimulator />;
-            case "Community Connect":
-                return <CommunityConnectSimulator />;
-            case "Nimma-Guru":
-                return <NimmaGuruSimulator />;
-            case "AI Career CoPilot":
-                return <AiCareerCoPilotSimulator />;
-            case "Self-Correcting Agent":
-                return <SelfCorrectingAgentSimulator />;
-            default:
-                return <div className="text-center py-8 font-pixel text-zinc-500">Simulator not found.</div>;
+        if (title.includes("OXYS")) {
+            return <OxysSimulator />;
+        } else if (title.includes("ICHNOS")) {
+            return <IchnosSimulator />;
+        } else if (title.includes("DataRace")) {
+            return <DataRaceSimulator />;
+        } else {
+            return <div className="text-center py-8 font-pixel text-zinc-500">Simulator not found.</div>;
         }
     };
 
@@ -2532,7 +566,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({
     }, [onClose, onNavigate, project]);
 
     if (!project) return null;
-    const currentStudy = caseStudies[project.slug];
 
     return (
         <motion.div

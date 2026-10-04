@@ -149,8 +149,8 @@ export default function FellOut404() {
       <motion.div className="fell-depth fell-depth-mid" animate={reducedMotion ? undefined : { x: pointer.x * -20, y: pointer.y * -14 }} />
 
       <div className="fell-header">
-        <Link href="/" className="fell-brand" aria-label="Anirudh S home">ANIRUDH S <span>AI / ML ENGINEER</span></Link>
-        <span className="fell-status"><i /> OPEN FOR AI / ML ROLES</span>
+        <Link href="/" className="fell-brand" aria-label="Sivasakthi Vengatesan home">SIVASAKTHI VENGATESAN <span>BACKEND / BIG DATA ENGINEER</span></Link>
+        <span className="fell-status"><i /> OPEN FOR BACKEND / BIG DATA ROLES</span>
       </div>
 
       <section className="fell-copy" aria-labelledby="fell-title">

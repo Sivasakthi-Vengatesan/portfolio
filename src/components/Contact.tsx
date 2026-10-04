@@ -8,32 +8,32 @@ const SUBJECT_OPTIONS = [
     {
         id: 'fulltime',
         label: 'Full-Time / Contract',
-        subject: 'Full-Time AI/ML Opportunity',
-        starter: "Hi Anirudh,\n\nI am reaching out regarding a Full-Time / Contract opportunity at [Company Name] for the role of [Position]. We were impressed by your profile and would love to connect!\n\nBest regards,"
+        subject: 'Full-Time Backend / Big Data Opportunity',
+        starter: "Hi Sivasakthi,\n\nI am reaching out regarding a Full-Time / Contract opportunity at [Company Name] for the role of [Position]. We were impressed by your profile and would love to connect!\n\nBest regards,"
     },
     {
         id: 'collaboration',
         label: 'Collaboration',
         subject: 'Project Collaboration',
-        starter: "Hi Anirudh,\n\nI saw your work and would love to collaborate with you on [Project Name / Topic]. Let's discuss how we can work together!\n\nBest regards,"
+        starter: "Hi Sivasakthi,\n\nI saw your work and would love to collaborate with you on [Project Name / Topic]. Let's discuss how we can work together!\n\nBest regards,"
     },
     {
         id: 'freelance',
         label: 'Freelance',
         subject: 'Freelance / Consulting Project',
-        starter: "Hi Anirudh,\n\nI have a project in mind involving [Brief Description] and would like to inquire about your availability and rates.\n\nBest regards,"
+        starter: "Hi Sivasakthi,\n\nI have a project in mind involving [Brief Description] and would like to inquire about your availability and rates.\n\nBest regards,"
     },
     {
         id: 'inquiry',
         label: 'General Inquiry',
         subject: 'General Inquiry',
-        starter: "Hi Anirudh,\n\nI wanted to get in touch with you regarding...\n\nBest regards,"
+        starter: "Hi Sivasakthi,\n\nI wanted to get in touch with you regarding...\n\nBest regards,"
     },
     {
         id: 'other',
         label: 'Other',
         subject: 'Other Inquiry',
-        starter: "Hi Anirudh,\n\n"
+        starter: "Hi Sivasakthi,\n\n"
     }
 ];
 
@@ -104,7 +104,7 @@ const Contact = () => {
         setFormData(prev => {
             const isStarterOrEmpty = prev.message === '' ||
                 SUBJECT_OPTIONS.some(opt => opt.starter === prev.message) ||
-                prev.message.startsWith('Hi Anirudh,');
+                prev.message.startsWith('Hi Sivasakthi,');
 
             return {
                 ...prev,
@@ -456,11 +456,11 @@ const Contact = () => {
                                                 </div>
                                                 <div className="flex justify-between gap-2 border-b border-black/10 pb-1.5">
                                                     <span className="text-zinc-600">Preferred Role</span>
-                                                    <span className="text-retro-charcoal text-right font-bold">Full-Time AI/ML Engineer</span>
+                                                    <span className="text-retro-charcoal text-right font-bold">Backend / Big Data Engineer</span>
                                                 </div>
                                                 <div className="flex justify-between gap-2 border-b border-black/10 pb-1.5">
                                                     <span className="text-zinc-600">Location</span>
-                                                    <span className="text-retro-charcoal text-right">Kozhikode, KL 🇮🇳</span>
+                                                    <span className="text-retro-charcoal text-right">Chennai, TN 🇮🇳</span>
                                                 </div>
                                                 <div className="flex justify-between gap-2">
                                                     <span className="text-zinc-600">Response Rate</span>
@@ -485,12 +485,6 @@ const Contact = () => {
                                                 <a href={`mailto:${portfolioData.personal.email}`} aria-label="Send an Email" className="w-10 h-10 border-2 border-black flex items-center justify-center bg-white hover:bg-red-500 hover:text-white transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" title="Direct Email">
                                                     <span className="material-symbols-outlined text-lg" aria-hidden="true">send</span>
                                                 </a>
-                                                {portfolioData.personal.social.buyMeACoffee && (
-                                                    <a href={portfolioData.personal.social.buyMeACoffee} aria-label="Buy Me A Coffee" target="_blank" rel="noopener noreferrer" className="h-10 px-3 border-2 border-black flex items-center gap-1.5 bg-retro-yellow hover:bg-yellow-400 transition-all font-pixel text-[10px] uppercase font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]" title="Buy Me A Coffee">
-                                                        <span className="material-symbols-outlined text-base">local_cafe</span>
-                                                        <span>Fuel Code</span>
-                                                    </a>
-                                                )}
                                             </div>
                                             
                                             {/* Quick Action Buttons */}
@@ -524,7 +518,7 @@ const Contact = () => {
                                             <div className="w-16 h-20 border-2 border-dashed border-black/40 bg-retro-white p-1.5 flex flex-col items-center justify-between text-center select-none rotate-2 hover:rotate-0 transition-transform shadow-[2px_2px_0px_0px_rgba(0,0,0,0.15)]">
                                                 <span className="material-symbols-outlined text-retro-orange text-lg">flight_takeoff</span>
                                                 <span className="font-pixel text-[7px] text-zinc-600 uppercase leading-tight font-bold">AIRMAIL<br/>CERTIFIED</span>
-                                                <span className="font-mono text-[8px] font-bold text-black border-t border-black/30 w-full pt-0.5">673001</span>
+                                                <span className="font-mono text-[8px] font-bold text-black border-t border-black/30 w-full pt-0.5">600069</span>
                                             </div>
                                         </div>
                                     </div>

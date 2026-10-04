@@ -39,7 +39,7 @@ const ResumeModal: React.FC<ResumeModalProps> = ({
         ? pdfUrl.replace(/\/view(\?.*)?$/, '/preview').replace(/\/edit(\?.*)?$/, '/preview')
         : pdfUrl;
 
-    const currentSrc = viewerSource === 'drive' ? driveEmbedSrc : "/Anirudh_S.pdf";
+    const currentSrc = viewerSource === 'drive' ? driveEmbedSrc : "/Sivasakthi_V.pdf";
 
     return (
         <AnimatePresence>
@@ -63,7 +63,7 @@ const ResumeModal: React.FC<ResumeModalProps> = ({
                         <div className="flex items-center gap-2">
                             <span className="material-symbols-outlined text-retro-yellow text-lg">description</span>
                             <span className="font-pixel text-xs sm:text-sm tracking-wider uppercase font-bold">
-                                RESUME_PREVIEW://ANIRUDH_S.PDF
+                                RESUME_PREVIEW://SIVASAKTHI_V.PDF
                             </span>
                         </div>
                         
@@ -89,7 +89,7 @@ const ResumeModal: React.FC<ResumeModalProps> = ({
                             </div>
 
                             <a
-                                href={viewerSource === 'drive' ? pdfUrl : "/Anirudh_S.pdf"}
+                                href={viewerSource === 'drive' ? pdfUrl : "/Sivasakthi_V.pdf"}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="px-2.5 py-1 bg-retro-green text-black border border-black rounded text-[10px] font-pixel uppercase font-bold hover:bg-emerald-300 transition-colors flex items-center gap-1 shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]"

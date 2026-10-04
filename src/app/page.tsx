@@ -1,7 +1,6 @@
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import Skills from "@/components/Skills";
-import Experience from "@/components/Experience";
 import Projects from "@/components/Projects";
 import Credentials from "@/components/Credentials";
 import Contribution from "@/components/Contribution";
@@ -35,12 +34,7 @@ export default function Home() {
           <Projects />
         </div>
 
-        {/* Row 4: Experience (Career History) */}
-        <div className="lg:col-span-12">
-          <Experience />
-        </div>
-
-        {/* Row 5: Consolidated Credentials (Education, Certifications, Achievements) */}
+        {/* Row 4: Consolidated Credentials (Education, Certifications, Achievements) */}
         <div className="lg:col-span-12">
           <Credentials />
         </div>

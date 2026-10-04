@@ -41,7 +41,7 @@ const About = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-pixel font-bold uppercase text-zinc-500">Degree</p>
-                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">B.E. AI & ML (2026)</p>
+                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">B.E. CSE @ CIT (2029)</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 bg-zinc-50 border-2 border-black/10 p-3 rounded-xl">
@@ -50,7 +50,7 @@ const About = () => {
                                 </div>
                                 <div>
                                     <p className="text-[10px] font-pixel font-bold uppercase text-zinc-500">Experience</p>
-                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">2 ML Internships</p>
+                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">Google Cloud Internship</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-3 bg-zinc-50 border-2 border-black/10 p-3 rounded-xl">
@@ -58,8 +58,8 @@ const About = () => {
                                     <span className="material-symbols-outlined text-retro-charcoal text-xl">bolt</span>
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-pixel font-bold uppercase text-zinc-500">Status</p>
-                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">Open for Work</p>
+                                    <p className="text-[10px] font-pixel font-bold uppercase text-zinc-500">Focus</p>
+                                    <p className="font-body font-bold text-xs sm:text-sm text-retro-charcoal">Backend & Big Data</p>
                                 </div>
                             </div>
                         </>

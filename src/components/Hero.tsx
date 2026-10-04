@@ -12,20 +12,20 @@ const Hero = () => {
 
     useEffect(() => {
         const banner = `
-  ____  _   _ ____   ___      _    _   _ ___ ____  _   _ ____  _   _ 
- / ___|| | | |  _ \\ / _ \\    / \\  | \\ | |_ _|  _ \\| | | |  _ \\| | | |
- \\___ \\| | | | | | | | | |  / _ \\ |  \\| || || |_) | | | | | | | |_| |
-  ___) | |_| | |_| | |_| | / ___ \\| |\\  || ||  _ <| |_| | |_| |  _  |
- |____/ \\___/|____/ \\___/ /_/   \\_\\_| \\_|___|_| \\_\\\\___/|____/|_| |_|
-                                                                     
- > SYSTEM READY. WELCOME TO ANIRUDH S PORTFOLIO!
+  ____  ______     ___    ____    _    _  _______ _   _ ___ 
+ / ___||_ _\\ \\   / / \\  / ___|  / \\  | |/ /_   _| | | |_ _|
+ \\___ \\ | | \\ \\ / / _ \\ \\___ \\ / _ \\ | ' /  | | | |_| || | 
+  ___) || |  \\ V / ___ \\ ___) / ___ \\| . \\  | | |  _  || | 
+ |____/|___|  \\_/_/   \\_\\____/_/   \\_\\_|\\_\\ |_| |_| |_|___|
+                                                            
+ > SYSTEM READY. WELCOME TO SIVASAKTHI VENGATESAN PORTFOLIO!
 `;
         console.log('%c' + banner, 'color: #22c55e; font-family: monospace; font-weight: bold; background: #111; padding: 8px; border-radius: 4px;');
     }, []);
 
     const handleActionClick = (e: React.MouseEvent, action: HeroAction) => {
-        if (action.text.includes("Download")) {
-            // Keep receipt printer trigger as optional interactive feature or default download behavior
+        if (action.text.includes("Download") || action.text.includes("Resume")) {
+            // Keep modal and direct action
         }
     };
 
@@ -57,12 +57,12 @@ const Hero = () => {
                         <div className="w-full md:w-2/3 space-y-5">
                             <div>
                                 <div className="flex items-center gap-2 text-zinc-500 font-pixel text-xs uppercase tracking-widest mb-1">
-                                    <span>AI/ML ENGINEER</span>
+                                    <span>BACKEND / BIG DATA ENGINEER</span>
                                     <span>·</span>
-                                    <span>KOZHIKODE, INDIA</span>
+                                    <span>CHENNAI, INDIA</span>
                                 </div>
-                                <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-display uppercase tracking-tighter leading-none text-zinc-900">
-                                    ANIRUDH S
+                                <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-display uppercase tracking-tighter leading-none text-zinc-900">
+                                    SIVASAKTHI VENGATESAN
                                 </h1>
                             </div>
 
@@ -74,15 +74,15 @@ const Hero = () => {
                             <div className="grid grid-cols-3 gap-2 bg-zinc-100 border-2 border-black p-3 rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                                 <div>
                                     <div className="font-pixel text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider">Location</div>
-                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">Kozhikode, KL</div>
+                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">Chennai, TN</div>
                                 </div>
                                 <div>
                                     <div className="font-pixel text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider">Primary Role</div>
-                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">AI/ML Engineer</div>
+                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">Backend / Big Data</div>
                                 </div>
                                 <div>
                                     <div className="font-pixel text-[9px] sm:text-[10px] text-zinc-500 uppercase tracking-wider">Core Focus</div>
-                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">Agentic Systems & RAG</div>
+                                    <div className="font-body text-xs sm:text-sm font-bold text-zinc-900 truncate">Distributed Systems</div>
                                 </div>
                             </div>
 
@@ -112,6 +112,15 @@ const Hero = () => {
                                 >
                                     <span>Quick View PDF</span>
                                     <span className="material-symbols-outlined text-base">visibility</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReceipt(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-3 rounded-xl border-2 border-black bg-retro-orange text-black hover:bg-orange-400 font-body text-xs sm:text-sm font-bold uppercase tracking-wider transition-all cursor-pointer shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                                    title="Open Fax / Receipt Printer"
+                                >
+                                    <span>Receipt.exe</span>
+                                    <span className="material-symbols-outlined text-base">receipt_long</span>
                                 </button>
                             </div>
                         </div>

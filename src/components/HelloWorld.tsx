@@ -257,12 +257,12 @@ const AsciiPet = () => {
     }, []);
 
     const phrases = [
-        "OOH! THAT TICKLES!",
-        "NEXT.JS IS SWEET!",
-        "SUDO ANIRUDH!",
-        "INPUT RECEIVED!",
-        "LOAD AVERAGE: OK",
-        "ERROR 404: PET ME"
+        "FEED ME LOGS!",
+        "SPARK STREAMING IS FAST!",
+        "SIVASAKTHI VENGATESAN!",
+        "EVENT INGESTED!",
+        "Z3 SOLVER: SAT",
+        "KAFKA TOPIC OK"
     ];
 
     const handleClick = () => {
@@ -273,7 +273,7 @@ const AsciiPet = () => {
     return (
         <div 
             className="flex flex-col items-center justify-center font-mono text-xs text-zinc-800 select-none cursor-pointer p-2 relative"
-            onMouseEnter={() => setBubble("HI HUMAN! *PURR*")}
+            onMouseEnter={() => setBubble("READY TO PROCESS DATA!")}
             onMouseLeave={() => setBubble("FEED ME DATA!")}
             onClick={handleClick}
         >
@@ -298,7 +298,6 @@ const StaticChannel = () => {
     
     useEffect(() => {
         const interval = setInterval(() => {
-            // ⚡ Bolt: Pre-allocate static noise frame as a single string to reduce array allocation overhead.
             let frameStr = '';
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 20; c++) {
@@ -322,7 +321,7 @@ const StaticChannel = () => {
 // Channel 08: Interactive CLI Shell Easter Egg
 const CliChannel = () => {
     const [history, setHistory] = useState<Array<{ cmd: string; output: string }>>([
-        { cmd: 'sysboot', output: 'MAC OS SYSTEM SHELL v1.0.4\nType "help" to view available commands.' }
+        { cmd: 'sysboot', output: 'PORTFOLIO_OS SYSTEM SHELL v2.4.0\nType "help" to view available commands.' }
     ]);
     const [input, setInput] = useState('');
     const endRef = React.useRef<HTMLDivElement>(null);
@@ -338,17 +337,17 @@ const CliChannel = () => {
             setInput('');
             return;
         } else if (trimmed === 'help') {
-            output = 'COMMANDS:\n • help     : List available commands\n • skills   : View core tech stack\n • projects : View top projects\n • contact  : Get contact details\n • resume   : Print resume summary\n • about    : Read bio summary\n • clear    : Clear terminal screen';
+            output = 'COMMANDS:\n • help     : List available commands\n • skills   : View core tech stack\n • projects : View top engineering projects\n • contact  : Get contact channels\n • resume   : Print resume summary\n • about    : Read identity bio\n • clear    : Clear terminal screen';
         } else if (trimmed === 'skills') {
-            output = 'CORE STACK:\n[AI/ML & Agents] Custom ReAct Loops, FastAPI, pgvector, Groq API, NVIDIA NIM, PyTorch\n[Backend & DB] Python, PostgreSQL, Supabase, Celery, Redis, RapidFuzz\n[Frontend & Mobile] Next.js, React, Jetpack Compose, Flutter, TFLite';
+            output = 'CORE STACK:\n[Big Data] Apache Spark, Kafka, Hadoop, HDFS, Hive, Sqoop, Airflow\n[Backend & DB] Python, Java 17, FastAPI, Spring Boot, PostgreSQL, pgvector, SQLAlchemy\n[AI / Security] Z3 SMT Theorem Prover, LangChain4j, RAG, LLM Tool Guardrails\n[Cloud & Tools] AWS, Linux, Bash, Git, Docker';
         } else if (trimmed === 'projects') {
-            output = 'TOP PROJECTS:\n1. Hirenix (AI Career Intelligence & Semantic Resume Search)\n2. Self-Correcting ReAct Agent (Autonomous Control Loop From Scratch)\n3. MessyData (Tiered Entity Resolution & Deduplication)\n4. PashuSwasthya (Offline Edge ML Diagnostic)';
+            output = 'TOP PROJECTS:\n1. AVE (Asynchronous Verification Engine - Z3 SMT Formal Guardrail)\n2. OXYS (Real-Time USGS Streaming Reliability on Spark & Kafka)\n3. Crime Record Intelligence Platform (Spring Boot + LangChain4j + pgvector)\n4. ICHNOS (Distributed Trace Inspection & Workflow Visualization)\n5. DataRace (Database Concurrency & Race Condition Anomaly Analysis)';
         } else if (trimmed === 'contact') {
-            output = 'CONTACT INFO:\nEmail: anirudhsudheer@gmail.com\nGitHub: github.com/SudoAnirudh\nLinkedIn: linkedin.com/in/sudoanirudh\nLocation: Kozhikode, KL (Open for Relocation & Remote)';
+            output = 'CONTACT INFO:\nEmail: sivasakthivengatesan2427@gmail.com\nGitHub: github.com/Sivasakthi-Vengatesan\nLinkedIn: linkedin.com/in/sivasakthi-vengatesan-8a1209410\nLocation: Chennai, Tamil Nadu, India';
         } else if (trimmed === 'cat resume.txt' || trimmed === 'resume') {
-            output = 'RESUME SUMMARY:\nAnirudh S | Full-Time AI/ML Engineer (B.E. AI & ML, CGPA 7.77)\n• Shipped 8+ Production GenAI, Agentic & Edge ML Systems\n• Available for Full-Time Roles & High-Impact Contracts';
+            output = 'RESUME SUMMARY:\nSIVASAKTHI VENGATESAN | BACKEND / BIG DATA ENGINEER\n• Chennai Institute of Technology (B.E. CSE, CGPA 8.6, 2029)\n• AICTE Google Virtual Cloud Internship\n• Winner BuildFest \'26 | Finalist Monad Blitz | 500+ LeetCode Solved';
         } else if (trimmed === 'about') {
-            output = 'ABOUT:\nAI/ML Engineer building production ML backends, custom agentic workflows, and edge inference systems.';
+            output = 'ABOUT:\nBackend and Big Data Engineer building data infrastructure around distributed processing, streaming data, and reliable software systems.';
         } else {
             output = `Command not found: "${trimmed}". Type "help" for options.`;
         }
@@ -422,10 +421,11 @@ const HelloWorld = () => {
     const [ledFlash, setLedFlash] = useState(false);
 
     const statusPhrases = [
-        'SudoAnirudh // READY_',
-        'FULL-TIME AI/ML ENGINEER_',
-        'CUSTOM REACT AGENT LOOPS_',
-        'PAN-INDIA & REMOTE_',
+        'SIVASAKTHI // READY_',
+        'BACKEND / BIG DATA ENGINEER_',
+        'DISTRIBUTED DATA PIPELINES_',
+        'Z3 FORMAL VERIFICATION_',
+        'SPARK STREAMING & KAFKA_',
         'SYSTEM OPERATIONAL_'
     ];
     const [phraseIndex, setPhraseIndex] = useState(0);

@@ -11,7 +11,7 @@ const ReceiptPrinter: React.FC<ReceiptPrinterProps> = ({ onClose }) => {
     const prefersReducedMotion = useReducedMotion();
     const [visibleLines, setVisibleLines] = useState<React.ReactNode[]>([]);
     const [faxPhase, setFaxPhase] = useState<'dialing' | 'handshake' | 'receiving' | 'complete'>('dialing');
-    const [lcdMessage, setLcdMessage] = useState("DIALING: 1-800-ANIRUDH...");
+    const [lcdMessage, setLcdMessage] = useState("DIALING: 1-800-SAKTHI...");
     const [isMuted, setIsMuted] = useState(true);
     const audioContextRef = useRef<AudioContext | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
@@ -132,11 +132,11 @@ const ReceiptPrinter: React.FC<ReceiptPrinterProps> = ({ onClose }) => {
     // Construct fax document content
     const faxDocumentLines: React.ReactNode[] = [
         <div key="head1" className="font-mono text-[9px] text-zinc-500 flex justify-between border-b border-zinc-400 pb-1 mb-2">
-            <span>[FAX TRANS-REC: #9482-AI]</span>
+            <span>[FAX TRANS-REC: #9482-DE]</span>
             <span>PAGE 01 / 01</span>
         </div>,
         <div key="head2" className="font-pixel text-lg font-bold tracking-widest text-zinc-900 text-center uppercase">=== INCOMING FAX TRANSMISSION ===</div>,
-        <div key="head3" className="font-pixel text-xs text-zinc-700 text-center uppercase mb-2">SENDER: ANIRUDH S (AI/ML ENGINEER)</div>,
+        <div key="head3" className="font-pixel text-xs text-zinc-700 text-center uppercase mb-2">SENDER: SIVASAKTHI VENGATESAN (BACKEND / BIG DATA ENGINEER)</div>,
         <div key="line1" className="border-b-2 border-black mb-3"></div>,
 
         <div key="section_exp" className="font-pixel text-xs font-bold text-zinc-900 uppercase">:: PROFESSIONAL SUMMARY &amp; EXPERIENCE ::</div>,
@@ -153,7 +153,7 @@ const ReceiptPrinter: React.FC<ReceiptPrinterProps> = ({ onClose }) => {
         <div key="line2" className="border-b border-dashed border-zinc-500 my-2"></div>,
         <div key="section_skills" className="font-pixel text-xs font-bold text-zinc-900 uppercase">:: CORE CAPABILITIES &amp; TECH STACK ::</div>,
         <div key="skills" className="font-mono text-[10px] text-zinc-800 leading-snug">
-            Python | PyTorch | TensorFlow | LangChain | FastAPI | Next.js | TypeScript | Kotlin | Docker | Supabase
+            Spark | Hadoop | Kafka | Python | Java | FastAPI | Spring Boot | PostgreSQL | Z3 | Docker | Airflow
         </div>,
 
         <div key="line3" className="border-b border-dashed border-zinc-500 my-2"></div>,
@@ -179,7 +179,7 @@ const ReceiptPrinter: React.FC<ReceiptPrinterProps> = ({ onClose }) => {
 
         // Phase 1: DTMF Dialing Tones
         setFaxPhase('dialing');
-        setLcdMessage("DIALING: 1-800-ANIRUDH...");
+        setLcdMessage("DIALING: 1-800-SAKTHI...");
         playDtmfTone(941, 1336);
         
         const t1 = setTimeout(() => {

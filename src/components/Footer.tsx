@@ -46,11 +46,11 @@ const Footer = () => {
                     </div>
 
                     <p className="font-body text-xs sm:text-sm text-zinc-700 leading-relaxed max-w-md">
-                        Building pragmatic AI/ML systems, quantized on-device neural models, and high-throughput full-stack web applications.
+                        Building backend systems, distributed data pipelines, and streaming infrastructure around Apache Spark, Kafka, and reliable software architectures.
                     </p>
 
                     <div className="pt-2 text-xs font-mono text-zinc-500">
-                        © 2026 Anirudh S · All Rights Reserved.
+                        © 2026 Sivasakthi Vengatesan · All Rights Reserved.
                     </div>
                 </div>
 
@@ -71,12 +71,6 @@ const Footer = () => {
                             <a href="#about" className="hover:text-retro-orange transition-colors flex items-center gap-1.5 text-zinc-800">
                                 <span className="material-symbols-outlined text-sm text-zinc-400">person</span>
                                 About & Skills
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#experience" className="hover:text-retro-orange transition-colors flex items-center gap-1.5 text-zinc-800">
-                                <span className="material-symbols-outlined text-sm text-zinc-400">terminal</span>
-                                Boot Log / Timeline
                             </a>
                         </li>
                         <li>
@@ -147,7 +141,7 @@ const Footer = () => {
 
             {/* Bottom Terminal Footnote */}
             <div className="mt-4 flex flex-col sm:flex-row items-center justify-between text-[10px] font-pixel text-zinc-500 uppercase tracking-widest gap-2 text-center sm:text-left px-2">
-                <div>KOZHIKODE, INDIA · IST (UTC+5:30)</div>
+                <div>CHENNAI, INDIA · IST (UTC+5:30)</div>
                 <div className="flex items-center gap-1.5 hover:text-retro-green transition-colors cursor-help border border-transparent hover:border-black/20 rounded px-1.5 py-0.5" title="Snake Status: 2,847 pixels eaten today">
                     <span className="inline-block animate-pulse">🐍</span>
                     <span>PIXEL SNAKE: ATE 2,847 PIXELS TODAY</span>
